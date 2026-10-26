@@ -34,8 +34,40 @@ depends entirely on which pod the router sends it to.
 
 ## Results
 
-The [cluster workflow](.github/workflows/cluster.yml) runs every router on every push and writes the comparison into
-its job summary; the first committed results land with its first green run, in [results/](results/).
+The same 1,672-request trace ([chat-rag-mix](workloads/chat-rag-mix.yaml), replayed at 2x, about 11 requests a
+second) through each router on its own kind cluster with four simulated vLLM pods, in
+[CI](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40304028854). Every request
+answered; the load client never fell behind. [Full results](results/chat-rag-mix/README.md).
+
+![TTFT and prefix-cache hits per router](results/chat-rag-mix/chart.svg)
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput (TTFT < 1 s) |
+|---|---|---|---|---|---|---|
+| round-robin (Service) | 132 ms | 717 ms | 967 ms | 64.3% | 0.97 | 99.1% |
+| load-aware | 123 ms | 684 ms | **857 ms** | 64.4% | 0.95 | **99.8%** |
+| prefix-aware | 89 ms | 718 ms | 1,315 ms | 80.0% | 0.66 | 98.1% |
+| prefix-load-aware | **81 ms** | **630 ms** | 1,048 ms | **82.3%** | 0.70 | 98.9% |
+
+What the numbers say:
+
+- **Knowing the prompt is what moves the median.** Prefix-aware routing lifts the pods' cache hit rate from 64% to
+  80-82%, close to the 86% the trace allows, and the median user waits 38% less for the first token (132 to 81 ms).
+  Load-awareness alone leaves the hit rate where round-robin had it.
+- **Prefix affinity alone piles work onto a few pods.** With only the prefix scorer, two pods served 638 and 631
+  requests while one served 87; that idle pod's cache barely warmed (1.7% hits). The tail paid for it: p99 TTFT
+  rose 36% over round-robin, and goodput was the lowest of the four.
+- **Adding load to the same decision recovers most of it.** Prefix plus load gave the best median, the best p95
+  (12% under round-robin) and the best throughput, and halved chat's p95 (334 to 195 ms), whose growing
+  conversations gain the most from a warm pod. Its p99 is still 8% above round-robin and its balance 0.70: a router
+  that chases cache hits trades some evenness for them.
+- **Traffic with nothing to share pays a little.** One-off prompts can't be accelerated by any router, and under
+  prefix-only routing their p95 rose 14%; with load in the mix it was back to round-robin's.
+- **Every request is accounted for.** The pods' cache counters and the cached-token figures the servers returned
+  with each response add up to the same hit rate for every router, and the pods served exactly the 1,672 requests
+  sent: nothing went uncounted or unscraped.
+
+One run of one trace on a shared 4-CPU CI runner: treat the latency tails as indicative and the pods' counters as
+exact. The [cluster workflow](.github/workflows/cluster.yml) reruns all four every week and on every push.
 
 ## How it works
 
@@ -97,7 +129,7 @@ make cluster MODE=prefix-load-aware
 |---|---|
 | Workload specs, seeded traces with exact shared-prefix accounting | Done, tested |
 | Open-loop streaming load client, run summaries, pod counters, reports, charts | Done, tested |
-| Four routers on kind with simulated vLLM pods, in CI on every push | Built; first committed results with the first green run |
+| Four routers on kind with simulated vLLM pods, in CI on every push; committed results | Done, results reproduced into the report by the tests |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
