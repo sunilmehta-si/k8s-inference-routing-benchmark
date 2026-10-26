@@ -4,7 +4,7 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [0.1.0] - 2026-10-26
 
-First results, from five cluster runs of every router on the chat-rag-mix trace. In every run, prefix-aware routing
+First results, from eight cluster runs of every router on the chat-rag-mix trace. In every run, prefix-aware routing
 (the llm-d Router) lifted the pods' prefix-cache hit rate from 64% to 80% and cut median time to first token 27%
 against a Kubernetes Service, while sending most requests to two of the four pods; load-aware routing had the best
 tail and goodput. Prefix plus load at equal weight did not reliably beat either, which the first run alone had
@@ -20,7 +20,7 @@ suggested it did.
   Router v1.0.0 with load-aware, prefix-aware and combined scoring, fail closed; in CI on every code change.
 - Repeated runs: the cluster workflow runs every router three times, each on its own cluster; `irb run --repeat`
   labels a run, and `irb report` and `irb chart` show each router's median with its range.
-- Committed results, five runs of each of the four routers, with a report and chart the tests regenerate exactly.
+- Committed results, eight runs of each of the four routers, with a report and chart the tests regenerate exactly.
 
 ### Fixed (found by the first cluster runs)
 - The vLLM render server crashed in a loop as an unprivileged user: importing vLLM asks for a user name the UID has

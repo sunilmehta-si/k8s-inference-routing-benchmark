@@ -35,53 +35,55 @@ depends entirely on which pod the router sends it to.
 ## Results
 
 The same 1,672-request trace ([chat-rag-mix](workloads/chat-rag-mix.yaml), replayed at 2x, about 11 requests a
-second) through each router five times, every run on its own kind cluster with four fresh simulated vLLM pods, in
-CI ([run 1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40304028854), [run 2](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40305449205), [runs 3 to 5](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40307507746)). All 33,440 requests
-were answered and the load client never fell behind. [Full results](results/chat-rag-mix/README.md).
+second) through each router eight times, every run on its own kind cluster with four fresh simulated vLLM pods, in
+CI ([run 1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40304028854), [run 2](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40305449205), [runs 3 to 5](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40307507746),
+[runs 6 to 8](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40309989360)). All 53,504 requests were answered and the load client never fell behind.
+[Full results](results/chat-rag-mix/README.md).
 
-![TTFT and prefix-cache hits per router, median of five runs](results/chat-rag-mix/chart.svg)
+![TTFT and prefix-cache hits per router, median of eight runs](results/chat-rag-mix/chart.svg)
 
-Each cell is the median of the five runs, with the lowest and highest in brackets.
+Each cell is the median of the eight runs, with the lowest and highest in brackets.
 
 | Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput (TTFT < 1 s) |
 |---|---|---|---|---|---|---|
-| round-robin (Service) | 122 ms (116–140) | 717 ms (704–731) | 967 ms (850–1,179) | 64.3% (63.3–64.6) | 0.96 (0.95–0.97) | 99.1% (98.6–99.5) |
-| load-aware | 105 ms (99–126) | 684 ms (679–693) | 868 ms (825–892) | 64.4% (63.3–65.0) | 0.97 (0.95–0.99) | 99.5% (99.4–99.8) |
-| prefix-aware | 89 ms (84–95) | 720 ms (670–954) | 1,281 ms (1,114–1,475) | 80.0% (78.9–82.4) | 0.60 (0.53–0.66) | 98.1% (95.8–98.7) |
-| prefix-load-aware | 94 ms (81–122) | 699 ms (630–862) | 1,089 ms (982–1,322) | 79.9% (78.9–82.3) | 0.61 (0.51–0.70) | 98.6% (97.0–99.1) |
+| round-robin (Service) | 121 ms (116–140) | 717 ms (673–731) | 952 ms (850–1,179) | 63.9% (63.3–64.6) | 0.96 (0.93–0.97) | 99.2% (98.6–99.5) |
+| load-aware | 109 ms (99–126) | 683 ms (642–693) | 863 ms (825–897) | 64.3% (63.3–65.0) | 0.97 (0.92–0.99) | 99.5% (99.3–99.8) |
+| prefix-aware | 88 ms (84–95) | 752 ms (614–954) | 1,255 ms (991–1,475) | 79.9% (78.9–82.4) | 0.60 (0.53–0.68) | 98.0% (95.8–99.0) |
+| prefix-load-aware | 92 ms (81–122) | 718 ms (630–862) | 1,102 ms (982–1,601) | 79.8% (78.9–82.3) | 0.56 (0.50–0.70) | 98.6% (97.0–99.1) |
 
-What held in all five runs:
+What held in all eight runs:
 
 - **Prefix-aware routing finds the cache.** Both routers that score prefixes lifted the pods' hit rate from about
   64% to about 80% in every run, against the 86% the trace allows. Load-awareness alone left it where round-robin
   had it.
-- **That cuts the median wait.** Prefix-only routing had a lower median TTFT than round-robin in every run: 89
-  against 122 ms, 27% less. Prefix plus load was lower in every run too, though in one by under a millisecond; by
-  23% at the median.
+- **That cuts the median wait.** Prefix-only routing had a lower median TTFT than round-robin in every run: 88
+  against 121 ms, 27% less. Prefix plus load was lower in every run too, though in one by under a millisecond; by
+  24% at the median.
 - **It also piles work onto two pods.** In every run of both prefix routers, two of the four pods served 69% to 90%
-  of the requests and one served fewer than 160; load balance fell from about 0.96 to about 0.60. Under round-robin
-  and load-aware routing no pod served more than 27%.
+  of the requests and one served fewer than 160; load balance fell from about 0.96 to under 0.6. Under round-robin
+  and load-aware routing no pod served more than 28%.
 - **The tail pays for it, and load-aware routing has the best one.** Load-aware routing had a lower p99 and a higher
-  goodput than both prefix routers in every run; prefix-only routing's median p99 was 48% above it. Load-aware also beat
-  round-robin's p95 in every run, if only by 5%.
+  goodput than both prefix routers in every run; prefix-only routing's median p99 was 46% above it. Load-aware also
+  beat round-robin's p95 in every run, if only by 5%.
 - **Traffic with nothing to share pays for prefix affinity.** One-off prompts can't be accelerated by any router.
-  Under prefix-only routing their p95 was the worst of the four in every run, 29% above round-robin's.
+  Under prefix-only routing their p95 was higher than under load-aware or prefix-plus-load routing in every run,
+  and above round-robin's in seven runs of eight, by 29% at the median.
 - **Every request is accounted for.** The pods' cache counters and the cached-token figures the servers returned
   with each response add up to the same hit rate in every run, and the pods served exactly the 1,672 requests sent.
 
 What did not hold:
 
 - **Adding load at equal weight did not reliably fix the pile-up.** The router's sample configuration weighs the two
-  scorers equally. Against prefix-only routing it lowered p99 and raised goodput in four runs of five, not all, and
-  spread the load about as unevenly (0.61 against 0.60): in two runs it sent 90% of requests to two pods. Its tail
-  was behind load-aware's in every run.
+  scorers equally. Against prefix-only routing it lowered p99 and raised goodput in five runs of eight, and spread
+  the load no better (0.56 against 0.60): in three runs it sent at least 87% of requests to two pods. Its tail was
+  behind load-aware's in every run.
 - **The first run's headline was one run.** Run 1 showed prefix plus load with the best median and p95 and chat's
-  p95 down 42%. Across five runs its median ranged from 81 to 122 ms and chat's p95 from 195 to 661 ms, so neither
+  p95 down 42%. Across eight runs its median ranged from 81 to 122 ms and chat's p95 from 195 to 661 ms, so neither
   claim stands. That is why every router now runs several times.
 
-Claims above are directions that held in every run; [the methodology](docs/methodology.md#repeats) says how runs
-are repeated and judged. The [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each
-week and on every code change.
+Claims above are directions that held in every run unless they say otherwise;
+[the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
+[cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
 
 ## How it works
 
@@ -144,7 +146,7 @@ make cluster MODE=prefix-load-aware
 | Workload specs, seeded traces with exact shared-prefix accounting | Done, tested |
 | Open-loop streaming load client, run summaries, pod counters, reports, charts | Done, tested |
 | Four routers on kind with simulated vLLM pods, in CI on every push; committed results | Done, results reproduced into the report by the tests |
-| Repeated runs, reported as median and range | Done: five runs per router committed, three per CI run |
+| Repeated runs, reported as median and range | Done: eight runs per router committed, three per CI run |
 | A heavier load weight next to the prefix scorer, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 

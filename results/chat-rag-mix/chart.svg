@@ -4,32 +4,32 @@
 <text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
 <text x="570" y="50" fill="#475569">Prefix-cache hits</text>
 <text x="16" y="84" fill="#0f172a">round-robin</text>
-<rect x="150" y="70" width="285.8" height="20" rx="3" fill="#93c5fd"/>
-<rect x="150" y="70" width="48.7" height="20" rx="3" fill="#2563eb"/>
-<line x1="430.6" y1="80" x2="441.1" y2="80" stroke="#1e3a8a" stroke-width="2"/>
-<text x="447.1" y="85" fill="#334155">122 / 717</text>
-<rect x="570" y="70" width="77.1" height="20" rx="3" fill="#059669"/>
-<text x="653.1" y="85" fill="#334155">64%</text>
+<rect x="150" y="70" width="285.7" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="70" width="48.1" height="20" rx="3" fill="#2563eb"/>
+<line x1="418.2" y1="80" x2="441.1" y2="80" stroke="#1e3a8a" stroke-width="2"/>
+<text x="447.1" y="85" fill="#334155">121 / 717</text>
+<rect x="570" y="70" width="76.7" height="20" rx="3" fill="#059669"/>
+<text x="652.7" y="85" fill="#334155">64%</text>
 <text x="16" y="128" fill="#0f172a">load-aware</text>
-<rect x="150" y="114" width="272.5" height="20" rx="3" fill="#93c5fd"/>
-<rect x="150" y="114" width="42.0" height="20" rx="3" fill="#2563eb"/>
-<line x1="420.4" y1="124" x2="426.0" y2="124" stroke="#1e3a8a" stroke-width="2"/>
-<text x="432.0" y="129" fill="#334155">105 / 684</text>
-<rect x="570" y="114" width="77.3" height="20" rx="3" fill="#059669"/>
-<text x="653.3" y="129" fill="#334155">64%</text>
+<rect x="150" y="114" width="272.1" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="114" width="43.3" height="20" rx="3" fill="#2563eb"/>
+<line x1="405.8" y1="124" x2="426.0" y2="124" stroke="#1e3a8a" stroke-width="2"/>
+<text x="432.0" y="129" fill="#334155">109 / 683</text>
+<rect x="570" y="114" width="77.2" height="20" rx="3" fill="#059669"/>
+<text x="653.2" y="129" fill="#334155">64%</text>
 <text x="16" y="172" fill="#0f172a">prefix-aware</text>
-<rect x="150" y="158" width="286.7" height="20" rx="3" fill="#93c5fd"/>
-<rect x="150" y="158" width="35.5" height="20" rx="3" fill="#2563eb"/>
-<line x1="417.2" y1="168" x2="530.0" y2="168" stroke="#1e3a8a" stroke-width="2"/>
-<text x="536.0" y="173" fill="#334155">89 / 720</text>
-<rect x="570" y="158" width="96.0" height="20" rx="3" fill="#059669"/>
-<text x="672.0" y="173" fill="#334155">80%</text>
+<rect x="150" y="158" width="299.8" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="158" width="35.2" height="20" rx="3" fill="#2563eb"/>
+<line x1="394.6" y1="168" x2="530.0" y2="168" stroke="#1e3a8a" stroke-width="2"/>
+<text x="536.0" y="173" fill="#334155">88 / 752</text>
+<rect x="570" y="158" width="95.9" height="20" rx="3" fill="#059669"/>
+<text x="671.9" y="173" fill="#334155">80%</text>
 <text x="16" y="216" fill="#0f172a">prefix-load-aware</text>
-<rect x="150" y="202" width="278.6" height="20" rx="3" fill="#93c5fd"/>
-<rect x="150" y="202" width="37.3" height="20" rx="3" fill="#2563eb"/>
+<rect x="150" y="202" width="286.2" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="202" width="36.7" height="20" rx="3" fill="#2563eb"/>
 <line x1="400.9" y1="212" x2="493.3" y2="212" stroke="#1e3a8a" stroke-width="2"/>
-<text x="499.3" y="217" fill="#334155">94 / 699</text>
-<rect x="570" y="202" width="95.9" height="20" rx="3" fill="#059669"/>
-<text x="671.9" y="217" fill="#334155">80%</text>
-<text x="16" y="272" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 5 runs per router (whisker: p95 range)</text>
+<text x="499.3" y="217" fill="#334155">92 / 718</text>
+<rect x="570" y="202" width="95.8" height="20" rx="3" fill="#059669"/>
+<text x="671.8" y="217" fill="#334155">80%</text>
+<text x="16" y="272" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
 </svg>
