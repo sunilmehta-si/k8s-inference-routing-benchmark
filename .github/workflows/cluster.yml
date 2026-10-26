@@ -72,9 +72,13 @@ jobs:
         if: failure()
         run: |
           kubectl -n irb get pods -o wide || true
-          kubectl -n irb describe pods | tail -80 || true
-          kubectl -n irb logs deploy/router-epp --all-containers --tail=80 || true
-          kubectl -n irb logs deploy/sim --tail=40 || true
+          kubectl -n irb get events --sort-by=.lastTimestamp | tail -40 || true
+          for pod in $(kubectl -n irb get pods -o name); do
+            echo "=== $pod"
+            kubectl -n irb get "$pod" -o jsonpath='{range .status.containerStatuses[*]}{.name}: {.state}{" last="}{.lastState}{"\n"}{end}' || true
+            kubectl -n irb logs "$pod" --all-containers --tail=40 || true
+            kubectl -n irb logs "$pod" --all-containers --previous --tail=40 2>/dev/null || true
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
