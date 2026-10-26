@@ -64,9 +64,16 @@ spec:
           image: ${RENDER_IMAGE}
           command: ["vllm"]
           args: ["launch", "render", "${MODEL}", "--port=8082"]
+          # The image has no passwd entry for an arbitrary non-root UID, and importing vLLM asks for the user name
+          # (torch's inductor cache path calls getpass.getuser(), which reads USER before the passwd file). A name
+          # and writable cache directories let it run unprivileged instead of as root.
           env:
             - {name: HOME, value: /tmp}
+            - {name: USER, value: vllm}
             - {name: HF_HOME, value: /tmp/hf}
+            - {name: XDG_CACHE_HOME, value: /tmp/cache}
+            - {name: TORCHINDUCTOR_CACHE_DIR, value: /tmp/cache/torchinductor}
+            - {name: VLLM_CACHE_ROOT, value: /tmp/cache/vllm}
           ports: [{name: http, containerPort: 8082}]
           startupProbe:
             httpGet: {path: /health, port: 8082}

@@ -48,6 +48,13 @@ class ModelServerTests(unittest.TestCase):
         self.assertIn("http://render.irb.svc:8082", args)
         self.assertEqual(sim["spec"]["template"]["metadata"]["labels"], {"app": "sim"})
 
+    def test_the_render_server_can_run_without_a_passwd_entry(self):
+        # vLLM's import calls getpass.getuser(); with no USER and no passwd entry for the UID it crashed in a loop.
+        render = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "render")
+        env = {e["name"]: e["value"] for e in render["spec"]["template"]["spec"]["containers"][0]["env"]}
+        self.assertEqual(env["USER"], "vllm")
+        self.assertTrue(env["TORCHINDUCTOR_CACHE_DIR"].startswith("/tmp/"))
+
     def test_pods_run_unprivileged(self):
         for d in self.docs:
             if d["kind"] != "Deployment":
