@@ -73,6 +73,18 @@ CPUs; a runner has 4).
 - Results record the model servers' image and full configuration; comparing different ones is refused.
 - The load client runs inside the cluster, not through a port-forward, and records its own lateness.
 
+## Repeats
+
+One run on a shared CI runner is an anecdote: the first two cluster runs of this project agreed on what prefix
+scoring does to the cache and disagreed on what it does to median latency. So every router runs several times
+(three by default, the `repeats` input of the [cluster workflow](../.github/workflows/cluster.yml)), each time on
+its own fresh cluster. Runs with the same repeat number start together, one runner per router, so they share a time
+window and runner generation.
+
+`irb report` shows each router's median with the range across its runs, and picks the best value by median. The
+README states a difference between two routers only when it held in every repeat; a difference that changes sign
+between repeats is reported as no difference, however large one run made it look.
+
 ## Limits
 
 - **A simulator is not a GPU.** It reproduces the timing model and the cache, not kernel effects such as batching
@@ -80,6 +92,8 @@ CPUs; a runner has 4).
 - **One trace, one cluster size.** Ratios of working set to cache, prompt lengths and load all move the result;
   the workload spec makes each of them a parameter.
 - **CI runners are noisy neighbours.** Runs share a 4-CPU machine with the Kubernetes control plane. The pods'
-  counters (hit rate, balance) are unaffected; latency percentiles carry that noise.
+  counters are exact, but what they count moves with timing: a router that weighs live load chooses differently
+  when a pod is momentarily slow, so hit rate and balance vary between runs too, if less than the latency tails.
+  Hence the repeats.
 - **Estimated, not precise, prefix scoring.** The picker guesses where blocks live from its own routing history;
   the precise mode, which reads the pods' KV-cache events, is the next configuration to add.
