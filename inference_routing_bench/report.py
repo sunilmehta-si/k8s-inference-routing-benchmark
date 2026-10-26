@@ -1,7 +1,13 @@
-"""Markdown comparison of router runs on the same trace: one column per router, best value in bold."""
+"""Markdown comparison of router runs on the same trace: one column per router, best value in bold.
+
+With several repeats of a router, each cell is the median across them with the range beside it, and the best value
+is picked by median: one run on a shared CI machine is an anecdote, the spread says how much to trust a difference.
+"""
 from __future__ import annotations
 
-from .results import comparable
+import statistics
+
+from .results import by_mode, comparable
 
 # (label, getter, unit, lower is better)
 ROWS = [
@@ -30,11 +36,22 @@ def _fmt(value, unit: str) -> str:
     return f"{value:,}"
 
 
-def _row(label: str, get, unit: str, lower: bool, runs: list[dict]) -> str:
-    values = [get(r) for r in runs]
+def _cell(values: list, unit: str) -> tuple[float | None, str]:
+    """(median, text) for one router's repeats: the value itself for one run, median and range for several."""
     present = [v for v in values if v is not None]
-    best = (min(present) if lower else max(present)) if present and len(set(present)) > 1 else None
-    cells = [f"**{_fmt(v, unit)}**" if v is not None and v == best else _fmt(v, unit) for v in values]
+    if not present:
+        return None, "n/a"
+    median = statistics.median(present)
+    if len(present) == 1:
+        return median, _fmt(median, unit)
+    return median, f"{_fmt(median, unit)} <sub>({_fmt(min(present), unit)}–{_fmt(max(present), unit)})</sub>"
+
+
+def _row(label: str, get, unit: str, lower: bool, groups: list[tuple[str, list[dict]]]) -> str:
+    cells = [_cell([get(r) for r in runs], unit) for _, runs in groups]
+    medians = [m for m, _ in cells if m is not None]
+    best = (min(medians) if lower else max(medians)) if medians and len(set(medians)) > 1 else None
+    cells = [f"**{text}**" if m is not None and m == best else text for m, text in cells]
     hint = "lower is better" if lower else "higher is better"
     name = f"{label} ({unit})" if unit == "ms" else label
     return f"| {name} <sub>{hint}</sub> | " + " | ".join(cells) + " |"
@@ -42,18 +59,23 @@ def _row(label: str, get, unit: str, lower: bool, runs: list[dict]) -> str:
 
 def markdown(runs: list[dict], title: str | None = None) -> str:
     comparable(runs)
+    groups = by_mode(runs)
     first = runs[0]
     summary = first["summary"]
+    repeats = sorted({len(rs) for _, rs in groups})
     lines = [f"## {title or first['trace']['name']}: {first['trace']['requests']:,} requests, TTFT objective {summary['ttft_slo_ms']:,} ms", ""]
-    lines += ["| Metric | " + " | ".join(r["mode"] for r in runs) + " |", "|---" * (len(runs) + 1) + "|"]
-    lines += [_row(label, get, unit, lower, runs) for label, get, unit, lower in ROWS]
+    if repeats != [1]:
+        lines += [f"Each cell is the median of {'/'.join(map(str, repeats))} runs per router, with the range in brackets; "
+                  "every run had its own cluster and fresh model servers.", ""]
+    lines += ["| Metric | " + " | ".join(m for m, _ in groups) + " |", "|---" * (len(groups) + 1) + "|"]
+    lines += [_row(label, get, unit, lower, groups) for label, get, unit, lower in ROWS]
     kinds = [k for k in ("chat", "rag", "single") if all(k in r["by_kind"] for r in runs)]
     if kinds:
-        lines += ["", "**TTFT p95 by kind of traffic (ms)**", "", "| Kind | " + " | ".join(r["mode"] for r in runs) + " |",
-                  "|---" * (len(runs) + 1) + "|"]
+        lines += ["", "**TTFT p95 by kind of traffic (ms)**", "", "| Kind | " + " | ".join(m for m, _ in groups) + " |",
+                  "|---" * (len(groups) + 1) + "|"]
         for k in kinds:
-            lines.append(_row(k, lambda r, k=k: r["by_kind"][k]["ttft_ms"]["p95"], "ms", True, runs).replace(f"| {k} (ms) <sub>lower is better</sub>", f"| {k}"))
-    late = [r["mode"] for r in runs if not r["summary"]["client"]["kept_up"]]
+            lines.append(_row(k, lambda r, k=k: r["by_kind"][k]["ttft_ms"]["p95"], "ms", True, groups).replace(f"| {k} (ms) <sub>lower is better</sub>", f"| {k}"))
+    late = sorted({r["mode"] for r in runs if not r["summary"]["client"]["kept_up"]})
     if late:
         lines += ["", f"> The load client fell behind during: {', '.join(late)}. Those latencies include the client's own delay."]
     lines.append("")
