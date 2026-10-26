@@ -1,0 +1,111 @@
+name: cluster
+
+# Replays the same workload through each router on a real kind cluster: simulated vLLM pods with a prefix cache,
+# and the llm-d Router's endpoint picker in front of them with each scoring configuration. Each router gets its own
+# cluster and fresh model servers, so none inherits another's warm cache. A final job puts the results side by side.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      workload:
+        description: Workload spec in workloads/
+        default: chat-rag-mix
+      speedup:
+        description: Replay this many times faster than the trace
+        default: "2"
+  schedule:
+    - cron: "41 3 * * 1"
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cluster-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [round-robin, load-aware, prefix-aware, prefix-load-aware]
+    env:
+      MODE: ${{ matrix.mode }}
+      WORKLOAD: ${{ inputs.workload || 'chat-rag-mix' }}
+      SPEEDUP: ${{ inputs.speedup || '2' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Install kind and Helm
+        run: |
+          . deploy/versions.env
+          curl -sSfL -o "$RUNNER_TEMP/kind" "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
+          echo "${KIND_SHA256_LINUX_AMD64}  $RUNNER_TEMP/kind" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/kind"
+          name="helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$name" "https://get.helm.sh/$name"
+          echo "${HELM_SHA256_LINUX_AMD64}  $RUNNER_TEMP/$name" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$name" -C "$RUNNER_TEMP" --strip-components=1 linux-amd64/helm
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Cluster, CRDs and the load client image
+        run: scripts/cluster-up.sh
+      - name: Model servers with empty caches
+        run: scripts/deploy-servers.sh 4
+      - name: Router
+        if: matrix.mode != 'round-robin'
+        run: scripts/install-router.sh "$MODE"
+      - name: Replay the workload
+        run: scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP"
+      - name: Diagnostics
+        if: failure()
+        run: |
+          kubectl -n irb get pods -o wide || true
+          kubectl -n irb describe pods | tail -80 || true
+          kubectl -n irb logs deploy/router-epp --all-containers --tail=80 || true
+          kubectl -n irb logs deploy/sim --tail=40 || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: result-${{ matrix.mode }}
+          path: out/
+          if-no-files-found: warn
+
+  report:
+    needs: run
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: result-*
+          merge-multiple: true
+          path: out
+      - name: Compare the routers
+        run: |
+          runs=(out/round-robin.json out/load-aware.json out/prefix-aware.json out/prefix-load-aware.json)
+          irb report "${runs[@]}" -o out/README.md
+          irb chart "${runs[@]}" --title "Routing on a kind cluster: 4 simulated vLLM pods, same trace" -o out/chart.svg
+          cat out/README.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: comparison
+          path: out/
