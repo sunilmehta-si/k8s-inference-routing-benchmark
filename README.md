@@ -60,10 +60,10 @@ What held in all eight runs:
   against 121 ms, 27% less. Prefix plus load was lower in every run too, though in one by under a millisecond; by
   24% at the median.
 - **It also piles work onto two pods.** In every run of both prefix routers, two of the four pods served 69% to 90%
-  of the requests and one served fewer than 160; load balance fell from about 0.96 to under 0.6. Under round-robin
+  of the requests and one served fewer than 160; load balance fell from about 0.96 to about 0.6. Under round-robin
   and load-aware routing no pod served more than 28%.
 - **The tail pays for it, and load-aware routing has the best one.** Load-aware routing had a lower p99 and a higher
-  goodput than both prefix routers in every run; prefix-only routing's median p99 was 46% above it. Load-aware also
+  goodput than both prefix routers in every run; prefix-only routing's median p99 was 45% above it. Load-aware also
   beat round-robin's p95 in every run, if only by 5%.
 - **Traffic with nothing to share pays for prefix affinity.** One-off prompts can't be accelerated by any router.
   Under prefix-only routing their p95 was higher than under load-aware or prefix-plus-load routing in every run,
