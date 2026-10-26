@@ -46,6 +46,18 @@ class FakeLLM(BaseHTTPRequestHandler):
                                           "prompt_tokens_details": {"cached_tokens": prompt_tokens if hit else 0}}}
         self.wfile.write(b"data: " + json.dumps(usage).encode() + b"\n\ndata: [DONE]\n\n")
 
+    def do_GET(self):                                          # noqa: N802
+        # /metrics in vLLM's format: every prompt is a cache query of 100 tokens, a repeated one a 100-token hit.
+        with FakeLLM.lock:
+            served, hits = len(FakeLLM.bodies), len(FakeLLM.bodies) - len(FakeLLM.seen)
+        data = (f"vllm:request_success_total{{model_name=\"m\"}} {served}\n"
+                f"vllm:prefix_cache_queries_total{{model_name=\"m\"}} {served * 100}\n"
+                f"vllm:prefix_cache_hits_total{{model_name=\"m\"}} {hits * 100}\n").encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def log_message(self, *args):
         pass
 
