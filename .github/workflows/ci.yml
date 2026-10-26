@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# `shell: bash` runs steps with -eo pipefail; the default (-e only) lets `script | tee` pass when the script fails.
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e .
+      - run: python -W error::SyntaxWarning -m unittest discover -s tests -t . -v
+
+  chart:
+    # The router chart at the pinned commit, rendered with each scoring configuration: the values must still
+    # match the chart, the images must be the pinned digests and the pool must fail closed.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Helm
+        run: |
+          . deploy/versions.env
+          name="helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$name" "https://get.helm.sh/$name"
+          echo "${HELM_SHA256_LINUX_AMD64}  $RUNNER_TEMP/$name" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$name" -C "$RUNNER_TEMP" --strip-components=1 linux-amd64/helm
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Render every router configuration
+        run: |
+          . deploy/versions.env
+          src="$RUNNER_TEMP/router"
+          git init -q "$src" && git -C "$src" fetch -q --depth 1 "$ROUTER_REPO" "$ROUTER_COMMIT" && git -C "$src" checkout -q FETCH_HEAD
+          chart="$src/config/charts/llm-d-router-standalone"
+          helm dependency build "$chart" >/dev/null
+          name_tag="${EPP_IMAGE##*/}"
+          for mode in load-aware prefix-aware prefix-load-aware; do
+            helm template router "$chart" --namespace irb -f deploy/router/common.yaml -f "deploy/router/$mode.yaml" \
+              --set "router.epp.image.registry=${EPP_IMAGE%/*}" --set "router.epp.image.repository=${name_tag%%:*}" \
+              --set-string "router.epp.image.tag=${name_tag#*:}" --set "router.proxy.image=${ENVOY_IMAGE}" > "$RUNNER_TEMP/$mode.yaml"
+            grep -q "image: ${EPP_IMAGE}$" "$RUNNER_TEMP/$mode.yaml"
+            grep -q "image: ${ENVOY_IMAGE}$" "$RUNNER_TEMP/$mode.yaml"
+            grep -q "failureMode: FailClose" "$RUNNER_TEMP/$mode.yaml"
+            grep -q "failure_mode_allow: false" "$RUNNER_TEMP/$mode.yaml"
+            echo "$mode: renders with the pinned images and fails closed"
+          done
