@@ -1,4 +1,5 @@
-"""Markdown comparison of router runs on the same trace: one column per router, best value in bold.
+"""Markdown comparison of router runs on the same trace: one column per router, best value in bold, and no bold
+where the best is a tie at the precision shown.
 
 With several repeats of a router, each cell is the median across them with the range beside it, and the best value
 is picked by median: one run on a shared CI machine is an anecdote, the spread says how much to trust a difference.
@@ -42,16 +43,18 @@ def _cell(values: list, unit: str) -> tuple[float | None, str]:
     if not present:
         return None, "n/a"
     median = statistics.median(present)
-    if len(present) == 1:
+    low, high = _fmt(min(present), unit), _fmt(max(present), unit)
+    if low == high:                                  # one run, or runs that agree to the precision shown
         return median, _fmt(median, unit)
-    return median, f"{_fmt(median, unit)} <sub>({_fmt(min(present), unit)}–{_fmt(max(present), unit)})</sub>"
+    return median, f"{_fmt(median, unit)} <sub>({low}–{high})</sub>"
 
 
 def _row(label: str, get, unit: str, lower: bool, groups: list[tuple[str, list[dict]]]) -> str:
     cells = [_cell([get(r) for r in runs], unit) for _, runs in groups]
     medians = [m for m, _ in cells if m is not None]
-    best = (min(medians) if lower else max(medians)) if medians and len(set(medians)) > 1 else None
-    cells = [f"**{text}**" if m is not None and m == best else text for m, text in cells]
+    # Compared as shown: 16.9 and 17.2 ms both read 17, and bolding one of them would claim a difference nobody can see.
+    best = _fmt(min(medians) if lower else max(medians), unit) if len({_fmt(m, unit) for m in medians}) > 1 else None
+    cells = [f"**{text}**" if m is not None and _fmt(m, unit) == best else text for m, text in cells]
     hint = "lower is better" if lower else "higher is better"
     name = f"{label} ({unit})" if unit == "ms" else label
     return f"| {name} <sub>{hint}</sub> | " + " | ".join(cells) + " |"

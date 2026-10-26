@@ -107,6 +107,10 @@ class CliTests(unittest.TestCase):
         self.assertIn("median of 1/3 runs per router", out)
         self.assertIn("| TTFT p95 (ms) <sub>lower is better</sub> | 700 <sub>(650–900)</sub> |", out)
         self.assertIn("| 120 <sub>(100–140)</sub> | **90** |", out)                       # best picked by median
+        errors = next(line for line in out.splitlines() if line.startswith("| Errors"))
+        self.assertTrue(errors.endswith("| 0 | 0 |"), errors)                              # no (0–0), and a tie isn't bold
+        p99 = next(line for line in out.splitlines() if line.startswith("| TTFT p99"))
+        self.assertNotIn("**", p99)
         code, _, _ = quiet(["chart", *map(str, paths), "--title", "t", "-o", str(self.d / "c.svg")])
         svg = (self.d / "c.svg").read_text()
         self.assertEqual(code, 0)
