@@ -1,0 +1,25 @@
+# One minute of the chat-rag-mix shape at a third of the rate: enough to check a cluster setup end to end
+# before spending five minutes per router on the full trace.
+name: smoke
+seed: 7
+duration_s: 60
+max_tokens: [32, 96]
+tenants:
+  - name: support
+    system_prompt_words: 400
+    chat:
+      sessions_per_minute: 4
+      turns: [2, 4]
+      think_time_s: 10
+      user_words: [15, 60]
+      reply_words: [60, 160]
+    rag:
+      queries_per_minute: 40
+      documents: 6
+      document_words: [900, 1600]
+      question_words: [10, 40]
+      zipf: 1.1
+  - name: batch
+    single:
+      per_minute: 20
+      words: [400, 1500]

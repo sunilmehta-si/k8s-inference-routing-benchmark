@@ -1,0 +1,35 @@
+# Five minutes of traffic for a small shared LLM service: a support assistant with chat sessions and RAG over its
+# help-centre articles, a legal team asking questions about long contracts, and a batch job with one-off prompts.
+# About 5-6 requests a second, prompts of 400-2,500 words; most prompt text repeats (system prompts, documents,
+# conversation history), which is what prefix-cache-aware routing can exploit.
+name: chat-rag-mix
+seed: 7
+duration_s: 300
+max_tokens: [32, 160]
+tenants:
+  - name: support
+    system_prompt_words: 400
+    chat:
+      sessions_per_minute: 8
+      turns: [2, 8]
+      think_time_s: 15
+      user_words: [15, 60]
+      reply_words: [60, 160]
+    rag:
+      queries_per_minute: 120
+      documents: 16
+      document_words: [900, 1600]
+      question_words: [10, 40]
+      zipf: 1.1
+  - name: legal
+    system_prompt_words: 600
+    rag:
+      queries_per_minute: 120
+      documents: 24
+      document_words: [1200, 2000]
+      question_words: [15, 50]
+      zipf: 1.1
+  - name: batch
+    single:
+      per_minute: 60
+      words: [400, 1500]
