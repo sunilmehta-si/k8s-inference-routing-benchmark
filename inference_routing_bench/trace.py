@@ -7,6 +7,8 @@ cannot, so the report can say how much of the possible saving each router actual
 """
 from __future__ import annotations
 
+import math
+
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
@@ -110,7 +112,7 @@ def stats(requests: list[Request]) -> dict:
     """What a trace asks of the cluster: volume, mix, prompt sizes and how much of the prompt text repeats."""
     def pct(values: list[int], p: float) -> int:
         ordered = sorted(values)
-        return ordered[min(len(ordered) - 1, max(0, round(p / 100 * len(ordered) + 0.5) - 1))]
+        return ordered[min(len(ordered) - 1, max(0, math.ceil(p / 100 * len(ordered)) - 1))]
 
     words = [r.prompt_words for r in requests]
     shared = sum(r.shared_prefix_words for r in requests)
