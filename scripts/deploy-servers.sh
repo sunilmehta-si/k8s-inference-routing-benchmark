@@ -25,6 +25,9 @@ if ! kubectl -n "$NS" rollout status deployment/render --timeout=900s >/dev/null
 fi
 printf '%s\n' "$manifests" | kubectl apply -f - >/dev/null
 kubectl -n "$NS" rollout status deployment/sim --timeout=300s >/dev/null
+# A CI run once found a pod not ready a second after the rollout reported done, so wait on every pod's own Ready
+# condition before counting them.
+kubectl -n "$NS" wait --for=condition=Ready pod -l app=sim --timeout=120s >/dev/null || kubectl -n "$NS" get pods -l app=sim -o wide >&2
 ready="$(kubectl -n "$NS" get pods -l app=sim -o jsonpath='{range .items[*]}{.status.containerStatuses[0].ready}{"\n"}{end}' | grep -c true)"
 [ "$ready" = "$REPLICAS" ] || { echo "only $ready of $REPLICAS model servers are ready" >&2; exit 1; }
 echo "model servers ready: $REPLICAS simulated vLLM pods (${SIM_IMAGE%@*}), tokenizer ${MODEL}"

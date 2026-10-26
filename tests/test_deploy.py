@@ -106,6 +106,14 @@ class ScriptTests(unittest.TestCase):
                     self.assertTrue(path.stat().st_mode & 0o111, "not executable")
                 subprocess.run(["bash", "-n", str(path)], check=True)
 
+    def test_model_servers_are_counted_only_after_every_pod_reports_ready(self):
+        script = (ROOT / "scripts/deploy-servers.sh").read_text()
+        rollout = script.index("rollout status deployment/sim")
+        wait = script.index("wait --for=condition=Ready pod -l app=sim")
+        count = script.index('ready="$(kubectl')
+        self.assertLess(rollout, wait)
+        self.assertLess(wait, count)
+
     def test_every_cluster_script_refuses_other_contexts(self):
         for path in sorted((ROOT / "scripts").glob("*.sh")):
             if path.name in ("lib.sh", "cluster-up.sh"):
