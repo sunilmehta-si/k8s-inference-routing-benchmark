@@ -1,0 +1,147 @@
+# The model servers every router is measured against: REPLICAS simulated vLLM pods behind one Service, and one
+# vLLM render server that tokenizes for all of them. ${VARS} come from deploy/versions.env and scripts/deploy.sh.
+#
+# Latency follows the simulator's "8B-class model on H100, balanced load" profile with the per-token calculator:
+# prefill costs 30 ms plus 0.25 ms per prompt token that is not already in the prefix cache, decode 12 ms per
+# output token, and everything slows down to 2x as a pod approaches its concurrency limit. So a 2,000-token prompt
+# whose prefix is cached starts streaming in about 35 ms instead of about 530 ms, which is what a router can win.
+#
+# Each pod's prefix cache holds 2,048 blocks of 16 tokens (32,768 tokens). The traces' hot set (system prompts,
+# the popular documents, live chat sessions) is about twice one pod's cache and fits in the four pods together:
+# a router that keeps each document on one pod can cache nearly all of it, one that sprays every document across
+# every pod cannot. A real 8B server on an H100 caches far more; the ratio of working set to cache is what
+# decides the result, and it is kept realistic here at a size a CI runner can hold.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: irb
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sim-config
+  namespace: irb
+data:
+  config.yaml: |
+    engine: vllm
+    port: 8000
+    mode: random
+    max-num-seqs: 8
+    max-model-len: 8192
+    latency-calculator: per-token
+    prefill-overhead: 30ms
+    prefill-time-per-token: 250us
+    prefill-time-std-dev: 5ms
+    inter-token-latency: 12ms
+    inter-token-latency-std-dev: 2ms
+    time-factor-under-load: 2.0
+    enable-kvcache: true
+    kv-cache-size: 2048
+    block-size: 16
+    hash-seed: "42"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: render
+  namespace: irb
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: render}
+  template:
+    metadata:
+      labels: {app: render}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: render
+          image: ${RENDER_IMAGE}
+          command: ["vllm"]
+          args: ["launch", "render", "${MODEL}", "--port=8082"]
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: HF_HOME, value: /tmp/hf}
+          ports: [{name: http, containerPort: 8082}]
+          startupProbe:
+            httpGet: {path: /health, port: 8082}
+            periodSeconds: 2
+            failureThreshold: 300
+          readinessProbe:
+            httpGet: {path: /health, port: 8082}
+            periodSeconds: 5
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {memory: 4Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: render
+  namespace: irb
+spec:
+  selector: {app: render}
+  ports: [{name: http, port: 8082, targetPort: 8082}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sim
+  namespace: irb
+spec:
+  replicas: ${REPLICAS}
+  selector:
+    matchLabels: {app: sim}
+  template:
+    metadata:
+      labels: {app: sim}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: sim
+          image: ${SIM_IMAGE}
+          args: ["--config", "/etc/sim/config.yaml", "--model", "${MODEL}", "--render-url", "http://render.irb.svc:8082"]
+          env:
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: POD_NAMESPACE
+              valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+            - name: POD_IP
+              valueFrom: {fieldRef: {fieldPath: status.podIP}}
+          ports: [{name: http, containerPort: 8000}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 2
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {memory: 1Gi}
+          volumeMounts: [{name: config, mountPath: /etc/sim, readOnly: true}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: config
+          configMap: {name: sim-config}
+---
+# The round-robin baseline: a plain Service, which kube-proxy balances per connection without looking at the
+# request or at the pods' load.
+apiVersion: v1
+kind: Service
+metadata:
+  name: sim
+  namespace: irb
+spec:
+  selector: {app: sim}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
