@@ -83,6 +83,36 @@ class CliTests(unittest.TestCase):
         with self.assertRaisesRegex(ResultsError, "schema"):
             load(self.d / "old.json")
 
+    def test_repeats_of_a_router_are_reported_as_median_and_range(self):
+        paths = []
+        for n, (p50, p95) in enumerate([(100.0, 700.0), (140.0, 900.0), (120.0, 650.0)], start=1):
+            path = self.d / f"rr-r{n}.json"
+            if n == 1:
+                code, _, _ = quiet(["run", "--url", self.url, "--model", "m", "--trace", str(self.trace), "--mode", "rr",
+                                    "--repeat", "1", "--speedup", "8", "-o", str(path)])
+                self.assertEqual(code, 0)
+                base = json.loads(path.read_text())
+                self.assertEqual(base["repeat"], 1)
+            run = json.loads(json.dumps(base))
+            run["repeat"] = n
+            run["summary"]["ttft_ms"]["p50"], run["summary"]["ttft_ms"]["p95"] = p50, p95
+            path.write_text(json.dumps(run))
+            paths.append(path)
+        other = json.loads(json.dumps(base))
+        other["mode"], other["summary"]["ttft_ms"]["p50"] = "pa", 90.0
+        (self.d / "pa-r1.json").write_text(json.dumps(other))
+        code, out, err = quiet(["report", *map(str, paths), str(self.d / "pa-r1.json")])
+        self.assertEqual(code, 0, err)
+        self.assertIn("| Metric | rr | pa |", out)                                     # one column per router, not per run
+        self.assertIn("median of 1/3 runs per router", out)
+        self.assertIn("| TTFT p95 (ms) <sub>lower is better</sub> | 700 <sub>(650–900)</sub> |", out)
+        self.assertIn("| 120 <sub>(100–140)</sub> | **90** |", out)                       # best picked by median
+        code, _, _ = quiet(["chart", *map(str, paths), "--title", "t", "-o", str(self.d / "c.svg")])
+        svg = (self.d / "c.svg").read_text()
+        self.assertEqual(code, 0)
+        self.assertIn("120 / 700", svg)
+        self.assertIn("median of 3 runs per router", svg)
+
     def test_a_dead_endpoint_fails_the_run_and_bad_input_is_a_usage_error(self):
         code, _, err = quiet(["run", "--url", "http://127.0.0.1:9", "--model", "m", "--trace", str(self.trace), "--mode", "x",
                               "--speedup", "8", "--timeout", "2", "-o", str(self.d / "x.json")])

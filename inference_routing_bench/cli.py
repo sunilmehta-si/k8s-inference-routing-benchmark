@@ -30,6 +30,7 @@ def _parser() -> argparse.ArgumentParser:
     rn.add_argument("--trace", required=True)
     rn.add_argument("--mode", required=True, help="Name of the router setup under test, e.g. round-robin.")
     rn.add_argument("--description", default="", help="One line saying what the router does.")
+    rn.add_argument("--repeat", type=int, default=1, help="Which repeat of this router this run is (default: 1).")
     rn.add_argument("--speedup", type=float, default=1.0, help="Replay this many times faster than the trace (default: 1).")
     rn.add_argument("--ttft-slo-ms", type=float, default=1000.0, help="TTFT objective for goodput (default: 1000).")
     rn.add_argument("--timeout", type=float, default=120.0, help="Seconds to wait on a stream before giving up.")
@@ -86,7 +87,7 @@ def _cmd_run(args) -> int:
         pods = cluster_view({name: delta(before.get(name, {}), after[name]) for name in after})
     cluster = json.loads(Path(args.cluster).read_text()) if args.cluster else None
     run = results.build(args.mode, Path(args.trace).stem, fingerprint(args.trace), measured, pods, cluster,
-                        args.ttft_slo_ms / 1000, args.description)
+                        args.ttft_slo_ms / 1000, args.description, args.repeat)
     results.save(run, args.output)
     if args.raw:
         Path(args.raw).write_text("".join(json.dumps(r.to_dict()) + "\n" for r in measured))
