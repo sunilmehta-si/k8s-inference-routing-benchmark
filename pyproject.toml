@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "k8s-inference-routing-benchmark"
+dynamic = ["version"]
+description = "Benchmark LLM request routing on Kubernetes (round-robin, load-aware, prefix-cache-aware) on identical chat and RAG traces, with simulated vLLM servers. No GPUs needed."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Sunil Mehta" }]
+keywords = ["kubernetes", "llm", "inference", "routing", "vllm", "llm-d", "gateway-api", "prefix-cache", "benchmark", "mlops"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Distributed Computing",
+  "Topic :: System :: Benchmark",
+  "Environment :: Console",
+]
+dependencies = ["PyYAML>=6.0"]
+
+[project.urls]
+Homepage = "https://github.com/sunilmehta-si/k8s-inference-routing-benchmark"
+
+[project.scripts]
+irb = "inference_routing_bench.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "inference_routing_bench.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["inference_routing_bench*"]
