@@ -62,6 +62,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("| Metric | round-robin | prefix-aware |", out)
         self.assertIn("Prefix-cache hit rate", out)
         self.assertIn("**TTFT p95 by kind of traffic (ms)**", out)
+        self.assertNotRegex(out.split("by kind of traffic")[1], r"\d\.\d")              # whole milliseconds
         code, _, _ = quiet(["chart", *map(str, runs), "--title", "tiny", "-o", str(self.d / "c.svg")])
         self.assertEqual(code, 0)
         self.assertTrue((self.d / "c.svg").read_text().startswith("<svg"))

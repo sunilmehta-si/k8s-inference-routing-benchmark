@@ -52,7 +52,7 @@ def markdown(runs: list[dict], title: str | None = None) -> str:
         lines += ["", "**TTFT p95 by kind of traffic (ms)**", "", "| Kind | " + " | ".join(r["mode"] for r in runs) + " |",
                   "|---" * (len(runs) + 1) + "|"]
         for k in kinds:
-            lines.append(_row(k, lambda r, k=k: r["by_kind"][k]["ttft_ms"]["p95"], "", True, runs).replace(f"| {k} <sub>lower is better</sub>", f"| {k}"))
+            lines.append(_row(k, lambda r, k=k: r["by_kind"][k]["ttft_ms"]["p95"], "ms", True, runs).replace(f"| {k} (ms) <sub>lower is better</sub>", f"| {k}"))
     late = [r["mode"] for r in runs if not r["summary"]["client"]["kept_up"]]
     if late:
         lines += ["", f"> The load client fell behind during: {', '.join(late)}. Those latencies include the client's own delay."]
