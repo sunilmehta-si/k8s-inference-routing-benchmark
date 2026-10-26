@@ -1,0 +1,21 @@
+# load-aware: pick the pod with the least queued and running work, from the pods' own vLLM metrics.
+# Ignores what the prompt is, so it balances well but finds a cached prefix only by chance.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: load-aware-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: load-aware-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker

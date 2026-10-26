@@ -1,0 +1,24 @@
+# prefix-load-aware: weigh the cached prefix and the pod's load equally, the llm-d Router's estimated
+# prefix-cache configuration (deploy/config/epp-estimate-prefix-cache-config.yaml at the pinned commit).
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: load-aware-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: load-aware-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker

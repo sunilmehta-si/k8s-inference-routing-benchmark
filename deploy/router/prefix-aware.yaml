@@ -1,0 +1,21 @@
+# prefix-aware: send each request to the pod most likely to hold the longest prefix of its prompt, estimated in
+# the endpoint picker from where earlier prompts went. Ignores load, so a popular document can pile onto one pod.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
