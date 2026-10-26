@@ -4,6 +4,8 @@
 # Usage: scripts/run.sh MODE WORKLOAD OUT [SPEEDUP] [REPEAT]
 #   MODE      round-robin (the plain Service) or a router installed by scripts/install-router.sh
 #   WORKLOAD  a spec in workloads/, e.g. chat-rag-mix
+#   SPEEDUP   replay this many times faster than the trace (default 1)
+#   REPEAT    which run of this router this is (default 1); results land in OUT/MODE-rREPEAT.json
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require_context
@@ -12,6 +14,7 @@ cd "$ROOT"
 mode="${1:?usage: run.sh MODE WORKLOAD OUT [SPEEDUP] [REPEAT]}"; workload="${2:?workload}"; out="${3:?output directory}"
 speedup="${4:-1}"; repeat="${5:-1}"; name="$mode-r$repeat"
 [ -f "workloads/$workload.yaml" ] || { echo "no workload workloads/$workload.yaml" >&2; exit 2; }
+[[ "$repeat" =~ ^[1-9][0-9]*$ ]] || { echo "REPEAT must be a whole number from 1, got '$repeat'" >&2; exit 2; }
 mkdir -p "$out"
 
 if [ "$mode" = round-robin ]; then
