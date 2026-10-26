@@ -66,9 +66,9 @@ spec:
             - |
               set -e
               printf '%s' "\$CLUSTER_JSON" > /tmp/cluster.json
-              irb trace generate workloads/$workload.yaml -o /tmp/trace.jsonl
+              irb trace generate workloads/$workload.yaml -o /tmp/$workload.jsonl
               status=0
-              irb run --url $url --model $MODEL --trace /tmp/trace.jsonl --mode $mode --speedup $speedup \
+              irb run --url $url --model $MODEL --trace /tmp/$workload.jsonl --mode $mode --speedup $speedup \
                 --description "$description" --cluster /tmp/cluster.json $(printf '%q ' "${scrape[@]}") \
                 --raw /tmp/raw.jsonl -o /tmp/result.json || status=\$?
               echo "=== irb result"; cat /tmp/result.json
