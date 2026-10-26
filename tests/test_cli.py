@@ -78,7 +78,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("different traces", err)
         code, _, err = quiet(["report", str(path), str(path)])
-        self.assertIn("more than one result for a router", err)
+        self.assertIn("more than one result for the same router and repeat", err)
         (self.d / "old.json").write_text(json.dumps({**other, "schema": 0}))
         with self.assertRaisesRegex(ResultsError, "schema"):
             load(self.d / "old.json")

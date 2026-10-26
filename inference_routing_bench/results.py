@@ -21,11 +21,12 @@ class ResultsError(ValueError):
 
 
 def build(mode: str, trace_name: str, trace_fingerprint: str, results: list[Result], pods: dict | None,
-          cluster: dict | None = None, ttft_slo_s: float = 1.0, description: str = "") -> dict:
+          cluster: dict | None = None, ttft_slo_s: float = 1.0, description: str = "", repeat: int = 1) -> dict:
     return {
         "schema": SCHEMA,
         "tool_version": __version__,
         "mode": mode,
+        "repeat": repeat,
         "description": description,
         "finished_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "trace": {"name": trace_name, "fingerprint": trace_fingerprint, "requests": len(results)},
@@ -64,6 +65,14 @@ def comparable(runs: list[dict]) -> None:
     servers = {json.dumps(r.get("cluster", {}).get("model_server", {}), sort_keys=True) for r in runs}
     if len(servers) > 1:
         raise ResultsError("the results ran against differently configured model servers")
-    modes = [r["mode"] for r in runs]
-    if len(set(modes)) != len(modes):
-        raise ResultsError(f"more than one result for a router: {', '.join(modes)}")
+    keys = [(r["mode"], r.get("repeat", 1)) for r in runs]
+    if len(set(keys)) != len(keys):
+        raise ResultsError("more than one result for the same router and repeat: " + ", ".join(f"{m}#{n}" for m, n in keys))
+
+
+def by_mode(runs: list[dict]) -> list[tuple[str, list[dict]]]:
+    """Runs grouped by router, routers in the order first seen, repeats in repeat order."""
+    groups: dict[str, list[dict]] = {}
+    for r in runs:
+        groups.setdefault(r["mode"], []).append(r)
+    return [(mode, sorted(rs, key=lambda r: r.get("repeat", 1))) for mode, rs in groups.items()]
