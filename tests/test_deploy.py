@@ -122,6 +122,23 @@ class ScriptTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_the_cluster_workflow_runs_every_router_several_times_on_fresh_clusters(self):
+        flow = yaml.safe_load((ROOT / ".github/workflows/cluster.yml").read_text())
+        run = flow["jobs"]["run"]
+        self.assertIn("[1, 2, 3]", run["strategy"]["matrix"]["repeat"])
+        steps = "\n".join(s.get("run", "") for s in run["steps"])
+        self.assertIn("scripts/cluster-up.sh", steps)                                  # every repeat builds its own cluster
+        self.assertIn('scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"', steps)
+        uploads = [s["with"]["name"] for s in run["steps"] if "upload-artifact" in s.get("uses", "")]
+        self.assertEqual(uploads, ["result-${{ matrix.mode }}-r${{ matrix.repeat }}"])  # repeats don't overwrite each other
+        script = (ROOT / "scripts/run.sh").read_text()
+        self.assertIn('name="$mode-r$repeat"', script)
+        self.assertIn("--repeat $repeat", script)
+        report = "\n".join(s.get("run", "") for s in flow["jobs"]["report"]["steps"])
+        self.assertIn('-r*.json', report)
+        # pyyaml reads the key `on` as True; docs and results pushes must not cancel a run that takes most of an hour
+        self.assertEqual(flow[True]["push"]["paths-ignore"], ["**.md", "docs/**", "results/**"])
+
     def test_workflows_run_bash_with_pipefail_and_read_only_tokens(self):
         flows = sorted((ROOT / ".github/workflows").glob("*.yml"))
         self.assertTrue(flows)

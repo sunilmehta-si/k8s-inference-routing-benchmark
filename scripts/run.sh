@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Replay a workload through one router from a Job inside the cluster, reading every model server's counters before
 # and after, and write the result (and every request's measurements) under OUT.
-# Usage: scripts/run.sh MODE WORKLOAD OUT [SPEEDUP]
+# Usage: scripts/run.sh MODE WORKLOAD OUT [SPEEDUP] [REPEAT]
 #   MODE      round-robin (the plain Service) or a router installed by scripts/install-router.sh
 #   WORKLOAD  a spec in workloads/, e.g. chat-rag-mix
 set -euo pipefail
@@ -9,7 +9,8 @@ set -euo pipefail
 require_context
 cd "$ROOT"
 
-mode="${1:?usage: run.sh MODE WORKLOAD OUT [SPEEDUP]}"; workload="${2:?workload}"; out="${3:?output directory}"; speedup="${4:-1}"
+mode="${1:?usage: run.sh MODE WORKLOAD OUT [SPEEDUP] [REPEAT]}"; workload="${2:?workload}"; out="${3:?output directory}"
+speedup="${4:-1}"; repeat="${5:-1}"; name="$mode-r$repeat"
 [ -f "workloads/$workload.yaml" ] || { echo "no workload workloads/$workload.yaml" >&2; exit 2; }
 mkdir -p "$out"
 
@@ -68,7 +69,7 @@ spec:
               printf '%s' "\$CLUSTER_JSON" > /tmp/cluster.json
               irb trace generate workloads/$workload.yaml -o /tmp/$workload.jsonl
               status=0
-              irb run --url $url --model $MODEL --trace /tmp/$workload.jsonl --mode $mode --speedup $speedup \
+              irb run --url $url --model $MODEL --trace /tmp/$workload.jsonl --mode $mode --repeat $repeat --speedup $speedup \
                 --description "$description" --cluster /tmp/cluster.json $(printf '%q ' "${scrape[@]}") \
                 --raw /tmp/raw.jsonl -o /tmp/result.json || status=\$?
               echo "=== irb result"; cat /tmp/result.json
@@ -85,10 +86,10 @@ for _ in $(seq 1 720); do
   [ -n "$state" ] && break
   sleep 5
 done
-log="$out/$mode.log"
+log="$out/$name.log"
 kubectl -n "$NS" logs "job/$job" > "$log"
 grep -q "^=== irb end" "$log" || { echo "the load client did not finish; log in $log" >&2; tail -20 "$log" >&2; exit 1; }
-sed -n '/^=== irb result$/,/^=== irb raw$/p' "$log" | sed '1d;$d' > "$out/$mode.json"
-sed -n '/^=== irb raw$/,/^=== irb end/p' "$log" | sed '1d;$d' > "$out/$mode.raw.jsonl"
+sed -n '/^=== irb result$/,/^=== irb raw$/p' "$log" | sed '1d;$d' > "$out/$name.json"
+sed -n '/^=== irb raw$/,/^=== irb end/p' "$log" | sed '1d;$d' > "$out/$name.raw.jsonl"
 grep "^irb: " "$log" || true
 exit "$(sed -n 's/^=== irb end //p' "$log")"

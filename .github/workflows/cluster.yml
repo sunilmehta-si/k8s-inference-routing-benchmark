@@ -2,10 +2,13 @@ name: cluster
 
 # Replays the same workload through each router on a real kind cluster: simulated vLLM pods with a prefix cache,
 # and the llm-d Router's endpoint picker in front of them with each scoring configuration. Each router gets its own
-# cluster and fresh model servers, so none inherits another's warm cache. A final job puts the results side by side.
+# cluster and fresh model servers, so none inherits another's warm cache, and runs several times, because one run on
+# a shared CI machine is an anecdote. A final job puts the results side by side as medians and ranges.
 on:
   push:
     branches: [main]
+    # A docs or committed-results change can't move a number, and would cancel a run in progress.
+    paths-ignore: ["**.md", "docs/**", "results/**"]
   workflow_dispatch:
     inputs:
       workload:
@@ -14,6 +17,9 @@ on:
       speedup:
         description: Replay this many times faster than the trace
         default: "2"
+      repeats:
+        description: Runs per router, each on its own cluster (JSON list)
+        default: "[1, 2, 3]"
   schedule:
     - cron: "41 3 * * 1"
 
@@ -36,8 +42,10 @@ jobs:
       fail-fast: false
       matrix:
         mode: [round-robin, load-aware, prefix-aware, prefix-load-aware]
+        repeat: ${{ fromJSON(inputs.repeats || '[1, 2, 3]') }}
     env:
       MODE: ${{ matrix.mode }}
+      REPEAT: ${{ matrix.repeat }}
       WORKLOAD: ${{ inputs.workload || 'chat-rag-mix' }}
       SPEEDUP: ${{ inputs.speedup || '2' }}
     steps:
@@ -67,7 +75,7 @@ jobs:
         if: matrix.mode != 'round-robin'
         run: scripts/install-router.sh "$MODE"
       - name: Replay the workload
-        run: scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP"
+        run: scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"
       - name: Diagnostics
         if: failure()
         run: |
@@ -82,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: result-${{ matrix.mode }}
+          name: result-${{ matrix.mode }}-r${{ matrix.repeat }}
           path: out/
           if-no-files-found: warn
 
@@ -105,7 +113,8 @@ jobs:
           path: out
       - name: Compare the routers
         run: |
-          runs=(out/round-robin.json out/load-aware.json out/prefix-aware.json out/prefix-load-aware.json)
+          runs=()
+          for mode in round-robin load-aware prefix-aware prefix-load-aware; do runs+=(out/"$mode"-r*.json); done
           irb report "${runs[@]}" -o out/README.md
           irb chart "${runs[@]}" --title "Routing on a kind cluster: 4 simulated vLLM pods, same trace" -o out/chart.svg
           cat out/README.md >> "$GITHUB_STEP_SUMMARY"
