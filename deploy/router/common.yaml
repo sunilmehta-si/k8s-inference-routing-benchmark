@@ -1,4 +1,5 @@
-# Settings every router run shares: the pinned images, the simulated vLLM pods as the pool, and fail-closed.
+# Settings every router run shares: the pinned images, the simulated vLLM pods as the pool, fail-closed, and pods
+# that meet Pod Security "restricted" like everything else in the namespace (the chart sets no security context).
 # The chart's default fails open (the proxy passes traffic straight through when the endpoint picker is
 # unreachable), which in a benchmark would quietly measure no routing at all; here a broken picker fails requests.
 # Image references are filled in from deploy/versions.env by scripts/install-router.sh.
@@ -16,12 +17,22 @@ router:
     proxyType: envoy
     mode: sidecar
     failOpen: false
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: ["ALL"]}
     # The chart sizes the proxy for production (4 CPUs, 8 GiB requested); a CI runner has 4 CPUs in all.
     resources:
       requests: {cpu: 250m, memory: 256Mi}
       limits: {memory: 1Gi}
   epp:
     replicas: 1
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 65532
+      seccompProfile: {type: RuntimeDefault}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: ["ALL"]}
     # Likewise 8 CPUs and 8 GiB by default. A few hundred requests a second need far less.
     resources:
       requests: {cpu: 500m, memory: 512Mi}

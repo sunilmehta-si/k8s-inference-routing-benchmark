@@ -74,6 +74,12 @@ class RouterConfigTests(unittest.TestCase):
         self.assertFalse(common["proxy"]["failOpen"])                       # a broken picker fails, never bypasses
         self.assertEqual(common["inferencePool"]["failureMode"], "FailClose")
         self.assertEqual(common["modelServers"]["matchLabels"], {"app": "sim"})
+        # the namespace enforces Pod Security "restricted"; without these the chart's pods are refused
+        self.assertTrue(common["epp"]["podSecurityContext"]["runAsNonRoot"])
+        self.assertEqual(common["epp"]["podSecurityContext"]["seccompProfile"], {"type": "RuntimeDefault"})
+        for part in (common["epp"], common["proxy"]):
+            self.assertFalse(part["securityContext"]["allowPrivilegeEscalation"])
+            self.assertEqual(part["securityContext"]["capabilities"]["drop"], ["ALL"])
         scorers = {}
         for path in sorted((ROOT / "deploy/router").glob("*.yaml")):
             if path.name == "common.yaml":
