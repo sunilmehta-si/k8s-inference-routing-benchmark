@@ -107,6 +107,10 @@ make cluster MODE=prefix-load-aware
   GPU schedulers (default, Kueue, Volcano, KAI), on real schedulers in CI with simulated GPU nodes.
 - [kubernetes-secure-mlops-pipeline](https://github.com/sunilmehta-si/kubernetes-secure-mlops-pipeline): signed,
   evaluated and admission-controlled model delivery on KServe.
+- [jev-inference-router](https://github.com/sunilmehta-si/jev-inference-router) routes by meaning (which handler
+  should answer a question) and [llm-inference-platform](https://github.com/sunilmehta-si/llm-inference-platform)
+  serves one engine behind a gateway. This project is the layer between them at scale: many copies of the same
+  model, and which one each request should go to.
 
 ## License
 
