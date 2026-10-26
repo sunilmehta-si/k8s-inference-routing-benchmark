@@ -1,9 +1,10 @@
+import statistics
 import unittest
 from pathlib import Path
 
 from inference_routing_bench.chart import svg
 from inference_routing_bench.report import markdown
-from inference_routing_bench.results import comparable, load
+from inference_routing_bench.results import by_mode, comparable, load
 
 from .test_reproducible import FINGERPRINTS
 
@@ -13,10 +14,21 @@ CHART_TITLE = "chat-rag-mix on kind: 4 simulated vLLM pods, 1,672 requests, same
 
 
 class CommittedResultsTests(unittest.TestCase):
-    """The committed results are a real cluster run; these keep the report, chart and README honest about them."""
+    """The committed results are real cluster runs; these keep the report, chart and README honest about them."""
 
     def setUp(self):
-        self.runs = [load(ROOT / "results/chat-rag-mix" / f"{m}.json") for m in MODES]
+        self.runs = [load(p) for m in MODES for p in sorted((ROOT / "results/chat-rag-mix").glob(f"{m}-r*.json"))]
+
+    def test_every_router_has_the_same_repeats_each_from_a_recorded_ci_run(self):
+        groups = dict(by_mode(self.runs))
+        self.assertEqual(tuple(groups), MODES)
+        repeats = {m: [r["repeat"] for r in rs] for m, rs in groups.items()}
+        self.assertEqual(len({tuple(v) for v in repeats.values()}), 1, repeats)
+        for r in self.runs:
+            with self.subTest(mode=r["mode"], repeat=r["repeat"]):
+                self.assertRegex(r["run_url"], r"^https://github\.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/\d+$")
+                path = ROOT / "results/chat-rag-mix" / f"{r['mode']}-r{r['repeat']}.json"
+                self.assertEqual(load(path), r)                                        # file name matches its contents
 
     def test_every_router_replayed_the_pinned_trace_against_the_same_servers(self):
         comparable(self.runs)
@@ -35,8 +47,9 @@ class CommittedResultsTests(unittest.TestCase):
 
     def test_the_readme_quotes_the_committed_numbers(self):
         readme = (ROOT / "README.md").read_text()
-        by = {r["mode"]: r for r in self.runs}
-        for mode in MODES:
+        for mode, rs in by_mode(self.runs):
             with self.subTest(mode=mode):
-                self.assertIn(f"{by[mode]['pods']['prefix_cache_hit_rate'] * 100:.1f}%", readme)
-                self.assertIn(f"{by[mode]['summary']['ttft_ms']['p50']:,.0f} ms", readme)
+                hit = statistics.median(r["pods"]["prefix_cache_hit_rate"] for r in rs)
+                p50 = statistics.median(r["summary"]["ttft_ms"]["p50"] for r in rs)
+                self.assertIn(f"{hit * 100:.1f}%", readme)
+                self.assertIn(f"{p50:,.0f} ms", readme)
