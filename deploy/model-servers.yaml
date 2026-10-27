@@ -74,6 +74,10 @@ spec:
             - {name: XDG_CACHE_HOME, value: /tmp/cache}
             - {name: TORCHINDUCTOR_CACHE_DIR, value: /tmp/cache/torchinductor}
             - {name: VLLM_CACHE_ROOT, value: /tmp/cache/vllm}
+            # The simulators reuse idle connections for up to 90 s (Go's default); vLLM closes them after 5 s, and
+            # a request written to a connection the server just closed fails with a broken pipe and is not retried.
+            # Keeping them open longer than the client does leaves the closing to the client.
+            - {name: VLLM_HTTP_TIMEOUT_KEEP_ALIVE, value: "120"}
           ports: [{name: http, containerPort: 8082}]
           startupProbe:
             httpGet: {path: /health, port: 8082}

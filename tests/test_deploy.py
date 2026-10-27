@@ -49,6 +49,13 @@ class ModelServerTests(unittest.TestCase):
         self.assertIn("http://render.irb.svc:8082", args)
         self.assertEqual(sim["spec"]["template"]["metadata"]["labels"], {"app": "sim"})
 
+    def test_the_render_server_outlasts_the_simulators_idle_connections(self):
+        render = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "render")
+        env = {e["name"]: e["value"] for e in render["spec"]["template"]["spec"]["containers"][0]["env"]}
+        # Go's http.DefaultTransport keeps idle connections 90 s; vLLM's default of 5 s made one request in a run
+        # fail with a broken pipe when a simulator reused a connection the render server had just closed.
+        self.assertGreater(int(env["VLLM_HTTP_TIMEOUT_KEEP_ALIVE"]), 90)
+
     def test_the_render_server_can_run_without_a_passwd_entry(self):
         # vLLM's import calls getpass.getuser(); with no USER and no passwd entry for the UID it crashed in a loop.
         render = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "render")
