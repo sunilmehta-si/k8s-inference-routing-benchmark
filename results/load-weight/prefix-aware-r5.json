@@ -1,0 +1,207 @@
+{
+  "by_kind": {
+    "chat": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 835.4,
+        "p95": 2812.8
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.9824,
+      "ok": 227,
+      "requests": 227,
+      "server_cached_prompt_share": 0.7817,
+      "status_counts": {
+        "200": 227
+      },
+      "throughput": {
+        "output_tokens_per_s": 56.7,
+        "requests_per_s": 1.53
+      },
+      "tpot_ms": {
+        "p50": 23.6,
+        "p95": 27.6
+      },
+      "ttft_ms": {
+        "mean": 281.0,
+        "p50": 149.7,
+        "p90": 686.6,
+        "p95": 797.6,
+        "p99": 1108.8
+      },
+      "ttft_slo_ms": 1000
+    },
+    "rag": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 1043.6,
+        "p95": 3119.2
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.9405,
+      "ok": 1160,
+      "requests": 1160,
+      "server_cached_prompt_share": 0.8518,
+      "status_counts": {
+        "200": 1160
+      },
+      "throughput": {
+        "output_tokens_per_s": 315.8,
+        "requests_per_s": 7.6
+      },
+      "tpot_ms": {
+        "p50": 23.4,
+        "p95": 28.0
+      },
+      "ttft_ms": {
+        "mean": 330.7,
+        "p50": 102.0,
+        "p90": 842.3,
+        "p95": 1044.3,
+        "p99": 1518.3
+      },
+      "ttft_slo_ms": 1000
+    },
+    "single": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 995.2,
+        "p95": 2743.0
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.9228,
+      "ok": 285,
+      "requests": 285,
+      "server_cached_prompt_share": 0.0164,
+      "status_counts": {
+        "200": 285
+      },
+      "throughput": {
+        "output_tokens_per_s": 74.3,
+        "requests_per_s": 1.87
+      },
+      "tpot_ms": {
+        "p50": 18.3,
+        "p95": 27.1
+      },
+      "ttft_ms": {
+        "mean": 481.5,
+        "p50": 388.4,
+        "p90": 929.0,
+        "p95": 1086.3,
+        "p99": 1736.7
+      },
+      "ttft_slo_ms": 1000
+    }
+  },
+  "cluster": {
+    "kind_node_image": "kindest/node:v1.37.0",
+    "model_server": {
+      "config": {
+        "block-size": 16,
+        "enable-kvcache": true,
+        "engine": "vllm",
+        "hash-seed": "42",
+        "inter-token-latency": "12ms",
+        "inter-token-latency-std-dev": "2ms",
+        "kv-cache-size": 2048,
+        "latency-calculator": "per-token",
+        "max-model-len": 8192,
+        "max-num-seqs": 8,
+        "mode": "random",
+        "port": 8000,
+        "prefill-overhead": "30ms",
+        "prefill-time-per-token": "250us",
+        "prefill-time-std-dev": "5ms",
+        "time-factor-under-load": 2.0
+      },
+      "image": "ghcr.io/llm-d/llm-d-inference-sim:v1.0.0",
+      "replicas": 4,
+      "tokenizer": "Qwen/Qwen2.5-1.5B-Instruct"
+    },
+    "router": "v1.0.0"
+  },
+  "description": "llm-d Router v1.0.0, standalone Envoy + endpoint picker, scoring: prefix-aware: send each request to the pod most likely to hold the longest prefix of its prompt, estimated in",
+  "finished_at": "2026-10-27T06:35:18Z",
+  "mode": "prefix-aware",
+  "pods": {
+    "balance": 0.535,
+    "per_pod": {
+      "sim-66f458bb76-cp8tc": {
+        "prefix_cache_hit_rate": 0.8037,
+        "requests": 782
+      },
+      "sim-66f458bb76-dh4cv": {
+        "prefix_cache_hit_rate": 0.7953,
+        "requests": 720
+      },
+      "sim-66f458bb76-nwnb2": {
+        "prefix_cache_hit_rate": 0.0166,
+        "requests": 52
+      },
+      "sim-66f458bb76-rxnbn": {
+        "prefix_cache_hit_rate": 0.324,
+        "requests": 118
+      }
+    },
+    "pods": 4,
+    "prefix_cache_hit_rate": 0.7632,
+    "requests_served": 1672
+  },
+  "repeat": 5,
+  "run_url": "https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40460496902",
+  "schema": 1,
+  "summary": {
+    "client": {
+      "kept_up": true,
+      "lateness_p95_ms": 0.0
+    },
+    "e2e_ms": {
+      "p50": 1002.9,
+      "p95": 3059.9
+    },
+    "error_rate": 0.0,
+    "errors": 0,
+    "goodput": 0.9432,
+    "ok": 1672,
+    "requests": 1672,
+    "server_cached_prompt_share": 0.7632,
+    "status_counts": {
+      "200": 1672
+    },
+    "throughput": {
+      "output_tokens_per_s": 445.1,
+      "requests_per_s": 10.95
+    },
+    "tpot_ms": {
+      "p50": 23.0,
+      "p95": 27.8
+    },
+    "ttft_ms": {
+      "mean": 349.7,
+      "p50": 195.1,
+      "p90": 833.4,
+      "p95": 1024.8,
+      "p99": 1486.2
+    },
+    "ttft_slo_ms": 1000
+  },
+  "tool_version": "0.1.0",
+  "trace": {
+    "fingerprint": "sha256:bc470acc83d6afbed70a27d05517c9ff855f93e97f455fda2752a1db0fc1fada",
+    "name": "chat-rag-mix",
+    "requests": 1672
+  }
+}
