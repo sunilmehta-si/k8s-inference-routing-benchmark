@@ -1,0 +1,24 @@
+# prefix-load-2x: the same two scorers as prefix-load-aware, with the pod's load weighted twice the cached prefix,
+# to test whether favouring load keeps prefix routing's cache hits without piling requests onto two pods.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: load-aware-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: load-aware-scorer
+            weight: 2.0
+          - pluginRef: max-score-picker

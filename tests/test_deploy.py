@@ -93,7 +93,19 @@ class RouterConfigTests(unittest.TestCase):
                 self.assertEqual({p["pluginRef"] for p in profile}, types - {"single-profile-handler"})
             scorers[path.stem] = sorted(t for t in types if t.endswith("-scorer"))
         self.assertEqual(scorers, {"load-aware": ["load-aware-scorer"], "prefix-aware": ["prefix-cache-scorer"],
-                                   "prefix-load-aware": ["load-aware-scorer", "prefix-cache-scorer"]})
+                                   "prefix-load-aware": ["load-aware-scorer", "prefix-cache-scorer"],
+                                   "prefix-load-2x": ["load-aware-scorer", "prefix-cache-scorer"]})
+
+    def test_prefix_load_2x_differs_from_prefix_load_aware_only_in_the_load_weight(self):
+        def profile(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            config = yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+            return config, {p["pluginRef"]: p.get("weight") for p in config["schedulingProfiles"][0]["plugins"]}
+        equal, equal_weights = profile("prefix-load-aware")
+        heavy, heavy_weights = profile("prefix-load-2x")
+        self.assertEqual(equal["plugins"], heavy["plugins"])
+        self.assertEqual(equal_weights, {**heavy_weights, "load-aware-scorer": 1.0})
+        self.assertEqual((heavy_weights["prefix-cache-scorer"], heavy_weights["load-aware-scorer"]), (1.0, 2.0))
 
 
 class ScriptTests(unittest.TestCase):
