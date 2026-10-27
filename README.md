@@ -86,7 +86,7 @@ What did not hold:
 ### Does weighting load higher fix the pile-up?
 
 No. `prefix-load-2x` keeps both scorers and doubles the load scorer's weight. All five routers ran eight more times
-in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40460496902), each repeat on fresh clusters at the same time. [Full results](results/load-weight/README.md).
+in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40460496902), on 40 fresh clusters that all started within six minutes. [Full results](results/load-weight/README.md).
 Medians of those eight runs:
 
 | Router | TTFT p50 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
