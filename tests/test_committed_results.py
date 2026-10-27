@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from inference_routing_bench.chart import svg
+from inference_routing_bench.compare import held
 from inference_routing_bench.report import markdown
 from inference_routing_bench.results import by_mode, comparable, load
 
@@ -53,3 +54,26 @@ class CommittedResultsTests(unittest.TestCase):
                 p50 = statistics.median(r["summary"]["ttft_ms"]["p50"] for r in rs)
                 self.assertIn(f"{hit * 100:.1f}%", readme)
                 self.assertIn(f"{p50:,.0f} ms", readme)
+
+    def test_every_claim_the_readme_says_held_in_every_run_did(self):
+        # (metric, winner, loser): each "What held in all eight runs" bullet in the README, as data.
+        claims = [
+            ("Prefix-cache hit rate", "prefix-aware", "round-robin"), ("Prefix-cache hit rate", "prefix-aware", "load-aware"),
+            ("Prefix-cache hit rate", "prefix-load-aware", "round-robin"), ("Prefix-cache hit rate", "prefix-load-aware", "load-aware"),
+            ("TTFT p50", "prefix-aware", "round-robin"), ("TTFT p50", "prefix-load-aware", "round-robin"),
+            ("Load balance", "round-robin", "prefix-aware"), ("Load balance", "round-robin", "prefix-load-aware"),
+            ("Load balance", "load-aware", "prefix-aware"), ("Load balance", "load-aware", "prefix-load-aware"),
+            ("TTFT p99", "load-aware", "prefix-aware"), ("TTFT p99", "load-aware", "prefix-load-aware"),
+            ("Goodput", "load-aware", "prefix-aware"), ("Goodput", "load-aware", "prefix-load-aware"),
+            ("TTFT p95", "load-aware", "round-robin"),
+            ("One-off TTFT p95", "load-aware", "prefix-aware"), ("One-off TTFT p95", "prefix-load-aware", "prefix-aware"),
+        ]
+        found = {(p.metric, p.winner, ({p.a, p.b} - {p.winner}).pop()) for p in held(self.runs)}
+        for claim in claims:
+            with self.subTest(claim=claim):
+                self.assertIn(claim, found)
+        # and the README's "did not hold" claims really didn't
+        for metric in ("TTFT p99", "Goodput", "Load balance"):
+            self.assertFalse({(metric, "prefix-load-aware", "prefix-aware"), (metric, "prefix-aware", "prefix-load-aware")} & found)
+        self.assertNotIn(("One-off TTFT p95", "round-robin", "prefix-aware"), found)   # seven runs of eight, not all
+
