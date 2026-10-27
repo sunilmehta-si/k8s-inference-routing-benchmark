@@ -77,3 +77,44 @@ class CommittedResultsTests(unittest.TestCase):
             self.assertFalse({(metric, "prefix-load-aware", "prefix-aware"), (metric, "prefix-aware", "prefix-load-aware")} & found)
         self.assertNotIn(("One-off TTFT p95", "round-robin", "prefix-aware"), found)   # seven runs of eight, not all
 
+
+
+class LoadWeightResultsTests(unittest.TestCase):
+    """Eight runs of all five routers from one CI run: does weighting load twice the prefix spread the work?"""
+    MODES = MODES + ("prefix-load-2x",)
+    TITLE = "Load weighted 2x next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests"
+
+    def setUp(self):
+        self.dir = ROOT / "results/load-weight"
+        self.runs = [load(p) for m in self.MODES for p in sorted(self.dir.glob(f"{m}-r*.json"))]
+
+    def test_one_clean_ci_run_with_eight_repeats_of_every_router(self):
+        comparable(self.runs)
+        self.assertEqual({r["trace"]["fingerprint"] for r in self.runs}, {FINGERPRINTS["chat-rag-mix"]})
+        self.assertEqual(len({r["run_url"] for r in self.runs}), 1)
+        groups = dict(by_mode(self.runs))
+        self.assertEqual(tuple(groups), self.MODES)
+        for mode, rs in groups.items():
+            with self.subTest(mode=mode):
+                self.assertEqual([r["repeat"] for r in rs], list(range(1, 9)))
+                for r in rs:
+                    self.assertEqual(r["summary"]["errors"], 0)
+                    self.assertTrue(r["summary"]["client"]["kept_up"])
+                    self.assertEqual(r["pods"]["requests_served"], r["trace"]["requests"])
+
+    def test_report_and_chart_regenerate_exactly(self):
+        self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, "load-weight (chat-rag-mix)"))
+        self.assertEqual((self.dir / "chart.svg").read_text(), svg(self.runs, self.TITLE))
+
+    def test_what_the_readme_says_about_doubling_the_load_weight(self):
+        found = {(p.metric, p.winner, ({p.a, p.b} - {p.winner}).pop()) for p in held(self.runs)}
+        for baseline in ("round-robin", "load-aware"):
+            with self.subTest(baseline=baseline):
+                # it keeps what prefix scoring buys...
+                self.assertIn(("Prefix-cache hit rate", "prefix-load-2x", baseline), found)
+                self.assertIn(("TTFT p50", "prefix-load-2x", baseline), found)
+                # ...and still piles work onto a few pods, with the tail that comes with it
+                for metric in ("Load balance", "TTFT p99", "Goodput"):
+                    self.assertIn((metric, baseline, "prefix-load-2x"), found)
+        # and against equal weights it changed nothing that held in every run
+        self.assertEqual({f for f in found if {f[1], f[2]} == {"prefix-load-aware", "prefix-load-2x"}}, set())
