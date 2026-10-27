@@ -55,7 +55,7 @@ Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-infer
 
 `round-robin` is a ClusterIP Service. The others are the [llm-d Router](https://github.com/llm-d/llm-d-router)
 v1.0.0 in standalone mode: Envoy in the endpoint picker's pod, asking it over ext_proc where each request should go.
-The four configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers and weights:
+The five configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters:
 
 - `load-aware`: `load-aware-scorer`, from the pods' queue and running counts.
 - `prefix-aware`: `prefix-cache-scorer` in its default estimate mode: the picker remembers which pod it sent each
@@ -63,6 +63,8 @@ The four configurations in [`deploy/router/`](../deploy/router/) differ only in 
 - `prefix-load-aware`: both, weight 1.0 each, the router's own estimated-prefix sample configuration.
 - `prefix-load-2x`: both, with the load scorer at weight 2.0. The equal-weight configuration sent most requests to
   two pods in every run; this asks whether favouring load keeps the cache hits and spreads the work.
+- `prefix-load-q8`: both at weight 1.0, with the load scorer's queue threshold at 8 instead of 128. The scorer gives
+  `0.5 × (1 − waiting / threshold)`, so with 128 a few waiting requests barely register; 8 is the pods' concurrency.
 
 Shared settings ([`common.yaml`](../deploy/router/common.yaml)): the simulated pods as the `InferencePool`, fail
 closed both in the pool and in Envoy, and resource requests a CI runner can hold (the chart's defaults ask for 12

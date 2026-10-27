@@ -16,8 +16,9 @@ prefix cache over real token blocks.
 | `prefix-aware` | Which pod most likely holds the longest prefix of this prompt in its cache. |
 | `prefix-load-aware` | Both, weighted equally. |
 | `prefix-load-2x` | Both, with load weighted twice the prefix. |
+| `prefix-load-q8` | Both, weighted equally, with the load scorer's queue threshold at the pods' concurrency (8). |
 
-The last four are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
+The last five are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
 that implements the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension)'s
 `InferencePool`) with one scoring configuration changed between them. Everything else, the trace, the model servers,
 their latency profile and cache, is identical, and every router starts on its own cluster with empty caches.
