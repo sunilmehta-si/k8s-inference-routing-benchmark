@@ -2,6 +2,18 @@
 
 All notable changes to this project. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- `irb compare`: per metric and pair of routers, in how many shared runs each was better; `--held` keeps only the
+  differences that held in every run. Reports with repeated runs list those differences too, and a test checks every
+  claim the README makes against them.
+- The `prefix-load-2x` router: the same scorers as `prefix-load-aware` with load weighted twice, and eight runs of all
+  five routers from one CI run in `results/load-weight/`. Doubling the weight kept the cache hits and the median and
+  did not spread the work: the load scorer's 128-request queue threshold leaves almost nothing to weigh.
+- The cluster workflow takes a `modes` input, and lists the repeat first in its matrix so a whole repeat starts
+  together even with more jobs than runners.
+
 ## [0.1.0] - 2026-10-26
 
 First results, from eight cluster runs of every router on the chat-rag-mix trace. In every run, prefix-aware routing
