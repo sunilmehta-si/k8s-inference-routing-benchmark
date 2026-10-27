@@ -11,7 +11,15 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 - The `prefix-load-2x` router: the same scorers as `prefix-load-aware` with load weighted twice, and eight runs of all
   five routers from one CI run in `results/load-weight/`. Doubling the weight kept the cache hits and the median and
   did not spread the work: the load scorer's 128-request queue threshold leaves almost nothing to weigh.
+- The `prefix-load-q8` router: equal weights with the load scorer's queue threshold at 8, the pods' concurrency, and
+  eight runs of it beside load-aware and prefix-load-aware in `results/queue-threshold/`. The spread did not change
+  either: the load score tops out at 0.5 while a held prefix scores near 1, so weight and threshold have to move
+  together.
 - The cluster workflow takes a `modes` input to run some of the routers.
+
+### Fixed
+- One request in 1,672 could fail with a broken pipe: the render server closed idle connections after vLLM's 5 s
+  default while the simulators reuse them for 90 s. It now keeps them for 120 s.
 
 ## [0.1.0] - 2026-10-26
 
