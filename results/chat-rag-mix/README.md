@@ -22,3 +22,29 @@ Each cell is the median of 8 runs per router, with the range in brackets; every 
 | chat | 383 <sub>(334–449)</sub> | **358 <sub>(325–387)</sub>** | 486 <sub>(204–694)</sub> | 378 <sub>(195–661)</sub> |
 | rag | 745 <sub>(715–756)</sub> | **712 <sub>(673–724)</sub>** | 770 <sub>(646–1,004)</sub> | 762 <sub>(660–965)</sub> |
 | single | 629 <sub>(587–717)</sub> | **620 <sub>(578–640)</sub>** | 814 <sub>(672–954)</sub> | 660 <sub>(615–719)</sub> |
+
+**Differences that held in every run both routers had**
+
+| Metric | Routers | Better in (runs) | Ties | Held by |
+|---|---|---|---|---|
+| TTFT p50 | round-robin vs prefix-aware | round-robin 0, prefix-aware 8 of 8 | 0 | prefix-aware |
+| TTFT p50 | round-robin vs prefix-load-aware | round-robin 0, prefix-load-aware 8 of 8 | 0 | prefix-load-aware |
+| TTFT p50 | load-aware vs prefix-aware | load-aware 0, prefix-aware 8 of 8 | 0 | prefix-aware |
+| TTFT p95 | round-robin vs load-aware | round-robin 0, load-aware 8 of 8 | 0 | load-aware |
+| TTFT p99 | round-robin vs load-aware | round-robin 0, load-aware 8 of 8 | 0 | load-aware |
+| TTFT p99 | load-aware vs prefix-aware | load-aware 8, prefix-aware 0 of 8 | 0 | load-aware |
+| TTFT p99 | load-aware vs prefix-load-aware | load-aware 8, prefix-load-aware 0 of 8 | 0 | load-aware |
+| Goodput | round-robin vs prefix-aware | round-robin 8, prefix-aware 0 of 8 | 0 | round-robin |
+| Goodput | load-aware vs prefix-aware | load-aware 8, prefix-aware 0 of 8 | 0 | load-aware |
+| Goodput | load-aware vs prefix-load-aware | load-aware 8, prefix-load-aware 0 of 8 | 0 | load-aware |
+| Prefix-cache hit rate | round-robin vs prefix-aware | round-robin 0, prefix-aware 8 of 8 | 0 | prefix-aware |
+| Prefix-cache hit rate | round-robin vs prefix-load-aware | round-robin 0, prefix-load-aware 8 of 8 | 0 | prefix-load-aware |
+| Prefix-cache hit rate | load-aware vs prefix-aware | load-aware 0, prefix-aware 8 of 8 | 0 | prefix-aware |
+| Prefix-cache hit rate | load-aware vs prefix-load-aware | load-aware 0, prefix-load-aware 8 of 8 | 0 | prefix-load-aware |
+| Load balance | round-robin vs prefix-aware | round-robin 8, prefix-aware 0 of 8 | 0 | round-robin |
+| Load balance | round-robin vs prefix-load-aware | round-robin 8, prefix-load-aware 0 of 8 | 0 | round-robin |
+| Load balance | load-aware vs prefix-aware | load-aware 8, prefix-aware 0 of 8 | 0 | load-aware |
+| Load balance | load-aware vs prefix-load-aware | load-aware 8, prefix-load-aware 0 of 8 | 0 | load-aware |
+| RAG TTFT p95 | round-robin vs load-aware | round-robin 0, load-aware 8 of 8 | 0 | load-aware |
+| One-off TTFT p95 | load-aware vs prefix-aware | load-aware 8, prefix-aware 0 of 8 | 0 | load-aware |
+| One-off TTFT p95 | prefix-aware vs prefix-load-aware | prefix-aware 0, prefix-load-aware 8 of 8 | 0 | prefix-load-aware |

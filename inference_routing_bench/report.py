@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import statistics
 
+from .compare import held, table
 from .results import by_mode, comparable
 
 # (label, getter, unit, lower is better)
@@ -78,6 +79,10 @@ def markdown(runs: list[dict], title: str | None = None) -> str:
                   "|---" * (len(groups) + 1) + "|"]
         for k in kinds:
             lines.append(_row(k, lambda r, k=k: r["by_kind"][k]["ttft_ms"]["p95"], "ms", True, groups).replace(f"| {k} (ms) <sub>lower is better</sub>", f"| {k}"))
+    if max(repeats) > 1:
+        found = held(runs)
+        lines += ["", "**Differences that held in every run both routers had**", ""]
+        lines.append(table(found).rstrip("\n") if found else "None: no router was better than another in every shared run.")
     late = sorted({r["mode"] for r in runs if not r["summary"]["client"]["kept_up"]})
     if late:
         lines += ["", f"> The load client fell behind during: {', '.join(late)}. Those latencies include the client's own delay."]
