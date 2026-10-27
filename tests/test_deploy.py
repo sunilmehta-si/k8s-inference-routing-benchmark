@@ -95,7 +95,22 @@ class RouterConfigTests(unittest.TestCase):
             scorers[path.stem] = sorted(t for t in types if t.endswith("-scorer"))
         self.assertEqual(scorers, {"load-aware": ["load-aware-scorer"], "prefix-aware": ["prefix-cache-scorer"],
                                    "prefix-load-aware": ["load-aware-scorer", "prefix-cache-scorer"],
-                                   "prefix-load-2x": ["load-aware-scorer", "prefix-cache-scorer"]})
+                                   "prefix-load-2x": ["load-aware-scorer", "prefix-cache-scorer"],
+                                   "prefix-load-q8": ["load-aware-scorer", "prefix-cache-scorer"]})
+
+    def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
+        def config(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            return yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+        equal, q8 = config("prefix-load-aware"), config("prefix-load-q8")
+        self.assertEqual(equal["schedulingProfiles"], q8["schedulingProfiles"])
+        load = next(p for p in q8["plugins"] if p["type"] == "load-aware-scorer")
+        self.assertEqual(load["parameters"], {"threshold": 8})
+        # the simulated pods run at most 8 requests at once (deploy/model-servers.yaml)
+        sims = [d for d in yaml.safe_load_all((ROOT / "deploy/model-servers.yaml").read_text()) if d and d.get("kind") == "ConfigMap"]
+        self.assertEqual(yaml.safe_load(sims[0]["data"]["config.yaml"])["max-num-seqs"], 8)
+        self.assertEqual([p for p in q8["plugins"] if p["type"] != "load-aware-scorer"],
+                         [p for p in equal["plugins"] if p["type"] != "load-aware-scorer"])
 
     def test_prefix_load_2x_differs_from_prefix_load_aware_only_in_the_load_weight(self):
         def profile(mode):

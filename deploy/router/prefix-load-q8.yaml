@@ -1,0 +1,26 @@
+# prefix-load-q8: prefix-load-aware's equal weights with the load scorer's queue threshold at 8, the pods' concurrency
+# limit, instead of 128, so a few waiting requests move a pod's load score as much as the prefix score can.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: load-aware-scorer
+          parameters:
+            threshold: 8
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: load-aware-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker

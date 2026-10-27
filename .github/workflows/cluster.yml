@@ -22,7 +22,7 @@ on:
         default: "[1, 2, 3]"
       modes:
         description: Routers to run (JSON list)
-        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x"]'
+        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8"]'
   schedule:
     - cron: "41 3 * * 1"
 
@@ -47,7 +47,7 @@ jobs:
         # Repeat first: GitHub creates jobs in matrix order, so a whole repeat starts together and runs with the same
         # repeat number share a time window even when there are more jobs than runners.
         repeat: ${{ fromJSON(inputs.repeats || '[1, 2, 3]') }}
-        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x"]') }}
+        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8"]') }}
     env:
       MODE: ${{ matrix.mode }}
       REPEAT: ${{ matrix.repeat }}
@@ -120,7 +120,7 @@ jobs:
         run: |
           shopt -s nullglob
           runs=()
-          for mode in round-robin load-aware prefix-aware prefix-load-aware prefix-load-2x; do runs+=(out/"$mode"-r*.json); done
+          for mode in round-robin load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8; do runs+=(out/"$mode"-r*.json); done
           irb report "${runs[@]}" -o out/README.md
           irb chart "${runs[@]}" --title "Routing on a kind cluster: 4 simulated vLLM pods, same trace" -o out/chart.svg
           cat out/README.md >> "$GITHUB_STEP_SUMMARY"
