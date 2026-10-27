@@ -79,21 +79,21 @@ class CommittedResultsTests(unittest.TestCase):
 
 
 
-class LoadWeightResultsTests(unittest.TestCase):
-    """Eight runs of all five routers from one CI run: does weighting load twice the prefix spread the work?"""
-    MODES = MODES + ("prefix-load-2x",)
-    TITLE = "Load weighted 2x next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests"
+class _OneRunDataset:
+    """A dataset from one CI run: eight clean repeats of each router, a report and chart that regenerate exactly."""
+    DIR = MODES_HERE = TITLE = REPORT_TITLE = None
 
     def setUp(self):
-        self.dir = ROOT / "results/load-weight"
-        self.runs = [load(p) for m in self.MODES for p in sorted(self.dir.glob(f"{m}-r*.json"))]
+        self.dir = ROOT / "results" / self.DIR
+        self.runs = [load(p) for m in self.MODES_HERE for p in sorted(self.dir.glob(f"{m}-r*.json"))]
+        self.found = {(p.metric, p.winner, ({p.a, p.b} - {p.winner}).pop()) for p in held(self.runs)}
 
     def test_one_clean_ci_run_with_eight_repeats_of_every_router(self):
         comparable(self.runs)
         self.assertEqual({r["trace"]["fingerprint"] for r in self.runs}, {FINGERPRINTS["chat-rag-mix"]})
         self.assertEqual(len({r["run_url"] for r in self.runs}), 1)
         groups = dict(by_mode(self.runs))
-        self.assertEqual(tuple(groups), self.MODES)
+        self.assertEqual(tuple(groups), self.MODES_HERE)
         for mode, rs in groups.items():
             with self.subTest(mode=mode):
                 self.assertEqual([r["repeat"] for r in rs], list(range(1, 9)))
@@ -103,18 +103,38 @@ class LoadWeightResultsTests(unittest.TestCase):
                     self.assertEqual(r["pods"]["requests_served"], r["trace"]["requests"])
 
     def test_report_and_chart_regenerate_exactly(self):
-        self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, "load-weight (chat-rag-mix)"))
+        self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, self.REPORT_TITLE))
         self.assertEqual((self.dir / "chart.svg").read_text(), svg(self.runs, self.TITLE))
 
+
+class LoadWeightResultsTests(_OneRunDataset, unittest.TestCase):
+    """Does weighting load twice the prefix spread the work?"""
+    DIR, REPORT_TITLE = "load-weight", "load-weight (chat-rag-mix)"
+    MODES_HERE = MODES + ("prefix-load-2x",)
+    TITLE = "Load weighted 2x next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests"
+
     def test_what_the_readme_says_about_doubling_the_load_weight(self):
-        found = {(p.metric, p.winner, ({p.a, p.b} - {p.winner}).pop()) for p in held(self.runs)}
         for baseline in ("round-robin", "load-aware"):
             with self.subTest(baseline=baseline):
                 # it keeps what prefix scoring buys...
-                self.assertIn(("Prefix-cache hit rate", "prefix-load-2x", baseline), found)
-                self.assertIn(("TTFT p50", "prefix-load-2x", baseline), found)
+                self.assertIn(("Prefix-cache hit rate", "prefix-load-2x", baseline), self.found)
+                self.assertIn(("TTFT p50", "prefix-load-2x", baseline), self.found)
                 # ...and still piles work onto a few pods, with the tail that comes with it
                 for metric in ("Load balance", "TTFT p99", "Goodput"):
-                    self.assertIn((metric, baseline, "prefix-load-2x"), found)
+                    self.assertIn((metric, baseline, "prefix-load-2x"), self.found)
         # and against equal weights it changed nothing that held in every run
-        self.assertEqual({f for f in found if {f[1], f[2]} == {"prefix-load-aware", "prefix-load-2x"}}, set())
+        self.assertEqual({f for f in self.found if {f[1], f[2]} == {"prefix-load-aware", "prefix-load-2x"}}, set())
+
+
+class QueueThresholdResultsTests(_OneRunDataset, unittest.TestCase):
+    """Does a queue threshold at the pods' concurrency let load count?"""
+    DIR, REPORT_TITLE = "queue-threshold", "queue-threshold (chat-rag-mix)"
+    MODES_HERE = ("load-aware", "prefix-load-aware", "prefix-load-q8")
+    TITLE = "Load scorer queue threshold 8 instead of 128: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_the_queue_threshold(self):
+        # load-aware still spreads the work and has the tail; the threshold did not move prefix-load-q8 off the pile-up
+        for metric in ("Load balance", "TTFT p99", "Goodput"):
+            self.assertIn((metric, "load-aware", "prefix-load-q8"), self.found)
+        self.assertIn(("Prefix-cache hit rate", "prefix-load-q8", "load-aware"), self.found)
+        self.assertEqual({f for f in self.found if {f[1], f[2]} == {"prefix-load-aware", "prefix-load-q8"}}, set())
