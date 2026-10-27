@@ -82,6 +82,32 @@ What did not hold:
   p95 down 42%. Across eight runs its median ranged from 81 to 122 ms and chat's p95 from 195 to 661 ms, so neither
   claim stands. That is why every router now runs several times.
 
+### Does weighting load higher fix the pile-up?
+
+No. `prefix-load-2x` keeps both scorers and doubles the load scorer's weight. All five routers ran eight more times
+in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40460496902), each repeat on fresh clusters at the same time. [Full results](results/load-weight/README.md).
+Medians of those eight runs:
+
+| Router | TTFT p50 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|
+| round-robin | 117 ms | 924 ms | 64.1% | 0.97 | 99.4% |
+| load-aware | 113 ms | 854 ms | 64.1% | 0.96 | 99.5% |
+| prefix-aware | 92 ms | 1,226 ms | 80.0% | 0.57 | 97.8% |
+| prefix-load-aware | 93 ms | 1,163 ms | 79.7% | 0.55 | 98.1% |
+| prefix-load-2x | 91 ms | 1,095 ms | 80.6% | 0.57 | 98.5% |
+
+- **It keeps what prefix scoring buys.** Its hit rate and median TTFT beat round-robin's and load-aware's in every
+  run, like the other two prefix routers.
+- **It piles work up just the same.** Its load balance was no better than either prefix router's, and round-robin
+  and load-aware beat its p99, goodput and balance in every run.
+- **Against equal weights, nothing held.** No metric was better for one of the two weightings in all eight runs.
+
+The scorer explains why. At the pinned commit the [load-aware scorer](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/loadaware/load_aware.go#L93-L112) gives a pod with an empty queue 0.5 and
+subtracts in proportion to waiting requests over a threshold of 128, so `0.5 × (1 − waiting / 128)`. It does not
+count running requests. With up to eight requests running per pod, queues stay a few requests long, so the load score
+differs between pods by about 0.02, while the prefix score spans 0 to 1. Doubling a difference that small changes
+nothing. The next configuration to measure is a threshold near the pods' concurrency, not a larger weight.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -148,7 +174,8 @@ make cluster MODE=prefix-load-aware
 | Open-loop streaming load client, run summaries, pod counters, reports, charts | Done, tested |
 | Four routers on kind with simulated vLLM pods, in CI on every push; committed results | Done, results reproduced into the report by the tests |
 | Repeated runs, reported as median and range | Done: eight runs per router committed, three per CI run |
-| A heavier load weight next to the prefix scorer, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
+| A heavier load weight next to the prefix scorer | Done: no change, eight runs of every router |
+| The load scorer's queue threshold near the pods' concurrency, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
