@@ -169,7 +169,6 @@ class WorkflowTests(unittest.TestCase):
         flow = yaml.safe_load((ROOT / ".github/workflows/cluster.yml").read_text())
         run = flow["jobs"]["run"]
         self.assertIn("[1, 2, 3]", run["strategy"]["matrix"]["repeat"])
-        self.assertEqual(list(run["strategy"]["matrix"])[:2], ["repeat", "mode"])        # whole repeats start together
         routers = {p.stem for p in (ROOT / "deploy/router").glob("*.yaml")} - {"common"}
         default_modes = set(json.loads(flow[True]["workflow_dispatch"]["inputs"]["modes"]["default"]))
         self.assertEqual(default_modes, routers | {"round-robin"})                       # every router config runs

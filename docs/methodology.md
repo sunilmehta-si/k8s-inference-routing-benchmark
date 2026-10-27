@@ -82,8 +82,9 @@ CPUs; a runner has 4).
 One run on a shared CI runner is an anecdote: the first two cluster runs of this project agreed on what prefix
 scoring does to the cache and disagreed on what it does to median latency. So every router runs several times
 (three by default, the `repeats` input of the [cluster workflow](../.github/workflows/cluster.yml)), each time on
-its own fresh cluster. Runs with the same repeat number start together, one runner per router, so they share a time
-window and runner generation.
+its own fresh cluster. A workflow run starts all its jobs within minutes of each other, in no fixed order, so the
+runs of one workflow run share a time window. Runs with the same repeat number always come from the same workflow
+run, and `irb compare` pairs them.
 
 `irb report` shows each router's median with the range across its runs, and picks the best value by median. The
 README states a difference between two routers only when it held in every repeat; a difference that changes sign

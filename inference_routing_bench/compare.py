@@ -1,7 +1,7 @@
 """Which differences between routers held in every run.
 
-Runs with the same repeat number started together, one per router, on runners of the same size, so they share a
-time window. For each metric and each pair of routers this counts the repeats in which each one was better. A
+Runs with the same repeat number come from the same CI workflow run, whose jobs all start within minutes of each
+other, so they share a time window. For each metric and each pair of routers this counts the repeats in which each one was better. A
 difference "held" when one router was better in every repeat the two share, and there are at least two of them:
 a single run can't tell a router's effect from the machine it happened to run on.
 """
