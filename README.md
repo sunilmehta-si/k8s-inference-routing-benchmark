@@ -109,6 +109,29 @@ count running requests. With up to eight requests running per pod, queues stay a
 differs between pods by about 0.02, while the prefix score spans 0 to 1. Doubling a difference that small changes
 nothing. The next configuration to measure is a threshold near the pods' concurrency, not a larger weight.
 
+### Does a lower queue threshold let load count?
+
+Not on its own. `prefix-load-q8` keeps equal weights and sets the load scorer's threshold to 8, the pods'
+concurrency, so a few waiting requests move a pod's load score a lot. Load-aware, prefix-load-aware and q8 ran eight
+times each in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40464366888). [Full results](results/queue-threshold/README.md). Medians:
+
+| Router | TTFT p50 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|
+| load-aware | 111 ms | 867 ms | 64.2% | 0.95 | 99.5% |
+| prefix-load-aware | 94 ms | 1,232 ms | 80.0% | 0.55 | 98.1% |
+| prefix-load-q8 | 94 ms | 1,132 ms | 79.6% | 0.56 | 98.4% |
+
+- **The spread did not change.** q8's balance matched equal weights', load-aware beat its balance, p99 and goodput
+  in every run, and no metric was better for one of the two prefix routers in all eight runs.
+- **The scores' ranges say why.** The [prefix scorer](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/prefix/plugin.go#L135-L175) gives each pod the share
+  of the prompt's blocks it already holds, 0 to 1; a pod that holds a RAG document's whole prefix scores about 0.98.
+  The [load scorer](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/loadaware/load_aware.go#L93-L112) never gives more than 0.5, and 0 only when the queue
+  reaches the threshold. At equal weights the most it can take away from a busy pod is 0.5, less than the prefix
+  gap, so the pod holding the prefix wins however long its queue. Lowering the threshold lets load reach that 0.5
+  sooner; it cannot make it larger.
+- **What should work, then.** Load can outweigh a full prefix match only with its weight above about 2 and the
+  threshold near the pods' concurrency, together. That pair is the next configuration to measure.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -176,7 +199,8 @@ make cluster MODE=prefix-load-aware
 | Four routers on kind with simulated vLLM pods, in CI on every push; committed results | Done, results reproduced into the report by the tests |
 | Repeated runs, reported as median and range | Done: eight runs per router committed, three per CI run |
 | A heavier load weight next to the prefix scorer | Done: no change, eight runs of every router |
-| The load scorer's queue threshold near the pods' concurrency, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
+| The load scorer's queue threshold at the pods' concurrency | Done: no change on its own, eight runs |
+| Load weight above 2 with the threshold at 8, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
