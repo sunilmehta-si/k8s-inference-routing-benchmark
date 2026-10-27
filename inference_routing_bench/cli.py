@@ -46,6 +46,11 @@ def _parser() -> argparse.ArgumentParser:
     rp.add_argument("--title")
     rp.add_argument("--output", "-o")
 
+    cp = sub.add_parser("compare", help="In how many runs each router beat each other one, per metric.")
+    cp.add_argument("results", nargs="+")
+    cp.add_argument("--held", action="store_true", help="Only the differences that held in every shared run.")
+    cp.add_argument("--output", "-o")
+
     ch = sub.add_parser("chart", help="SVG of TTFT and prefix-cache hits per router.")
     ch.add_argument("results", nargs="+")
     ch.add_argument("--title", required=True)
@@ -119,6 +124,12 @@ def main(argv: list[str] | None = None) -> int:
             from .report import markdown
             from .results import load
             _write(markdown([load(p) for p in args.results], args.title), args.output)
+            return 0
+        if args.command == "compare":
+            from .compare import held, pairs, table
+            from .results import load
+            runs = [load(p) for p in args.results]
+            _write(table(held(runs) if args.held else pairs(runs)), args.output)
             return 0
         if args.command == "chart":
             from .chart import svg

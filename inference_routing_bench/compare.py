@@ -76,3 +76,12 @@ def pairs(runs: list[dict]) -> list[Pair]:
 def held(runs: list[dict]) -> list[Pair]:
     """The pairs where one router was better in every shared repeat."""
     return [p for p in pairs(runs) if p.winner is not None]
+
+
+def table(found: list[Pair]) -> str:
+    """Markdown: one row per metric and pair, with how many shared repeats each router was better in."""
+    lines = ["| Metric | Routers | Better in (runs) | Ties | Held by |", "|---|---|---|---|---|"]
+    for p in found:
+        lines.append(f"| {p.metric} | {p.a} vs {p.b} | {p.a} {p.a_better}, {p.b} {p.b_better} of {p.repeats} | "
+                     f"{p.ties} | {p.winner or '–'} |")
+    return "\n".join(lines) + "\n"

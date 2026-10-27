@@ -111,6 +111,11 @@ class CliTests(unittest.TestCase):
         self.assertTrue(errors.endswith("| 0 | 0 |"), errors)                              # no (0–0), and a tie isn't bold
         p99 = next(line for line in out.splitlines() if line.startswith("| TTFT p99"))
         self.assertNotIn("**", p99)
+        code, out, _ = quiet(["compare", *map(str, paths), str(self.d / "pa-r1.json")])
+        self.assertEqual(code, 0)
+        self.assertIn("| TTFT p50 | rr vs pa | rr 0, pa 1 of 1 | 0 | – |", out)   # one shared run holds nothing
+        code, out, _ = quiet(["compare", "--held", *map(str, paths), str(self.d / "pa-r1.json")])
+        self.assertEqual(out.count("\n"), 2)                                       # header only
         code, _, _ = quiet(["chart", *map(str, paths), "--title", "t", "-o", str(self.d / "c.svg")])
         svg = (self.d / "c.svg").read_text()
         self.assertEqual(code, 0)
