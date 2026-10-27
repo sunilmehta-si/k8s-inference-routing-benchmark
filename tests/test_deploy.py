@@ -1,3 +1,4 @@
+import json
 import re
 import subprocess
 import unittest
@@ -146,6 +147,14 @@ class WorkflowTests(unittest.TestCase):
         flow = yaml.safe_load((ROOT / ".github/workflows/cluster.yml").read_text())
         run = flow["jobs"]["run"]
         self.assertIn("[1, 2, 3]", run["strategy"]["matrix"]["repeat"])
+        self.assertEqual(list(run["strategy"]["matrix"])[:2], ["repeat", "mode"])        # whole repeats start together
+        routers = {p.stem for p in (ROOT / "deploy/router").glob("*.yaml")} - {"common"}
+        default_modes = set(json.loads(flow[True]["workflow_dispatch"]["inputs"]["modes"]["default"]))
+        self.assertEqual(default_modes, routers | {"round-robin"})                       # every router config runs
+        chart_job = (ROOT / ".github/workflows/ci.yml").read_text()
+        for router in routers:
+            self.assertIn(router, chart_job)
+            self.assertIn(router, run["strategy"]["matrix"]["mode"])
         steps = "\n".join(s.get("run", "") for s in run["steps"])
         self.assertIn("scripts/cluster-up.sh", steps)                                  # every repeat builds its own cluster
         self.assertIn('scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"', steps)
