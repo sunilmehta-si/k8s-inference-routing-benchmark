@@ -222,6 +222,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("--repeat $repeat", script)
         report = "\n".join(s.get("run", "") for s in flow["jobs"]["report"]["steps"])
         self.assertIn('-r*.json', report)
+        # the report compares exactly the routers the matrix ran
+        compare = next(s for s in flow["jobs"]["report"]["steps"] if s.get("name") == "Compare the routers")
+        matrix_modes = run["strategy"]["matrix"]["mode"]
+        self.assertEqual("${{ fromJSON(" + compare["env"]["MODES"][4:-3] + ") }}", matrix_modes)
+        self.assertIn('jq -r \'.[]\' <<<"$MODES"', compare["run"])
         # pyyaml reads the key `on` as True; docs and results pushes must not cancel a run that takes most of an hour
         self.assertEqual(flow[True]["push"]["paths-ignore"], ["**.md", "docs/**", "results/**"])
 

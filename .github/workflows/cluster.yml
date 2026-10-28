@@ -117,10 +117,13 @@ jobs:
           merge-multiple: true
           path: out
       - name: Compare the routers
+        env:
+          # The routers this run measured, in the order given, so every router the matrix ran gets a column.
+          MODES: ${{ inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default"]' }}
         run: |
           shopt -s nullglob
           runs=()
-          for mode in round-robin load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8; do runs+=(out/"$mode"-r*.json); done
+          for mode in $(jq -r '.[]' <<<"$MODES"); do runs+=(out/"$mode"-r*.json); done
           irb report "${runs[@]}" -o out/README.md
           irb chart "${runs[@]}" --title "Routing on a kind cluster: 4 simulated vLLM pods, same trace" -o out/chart.svg
           cat out/README.md >> "$GITHUB_STEP_SUMMARY"
