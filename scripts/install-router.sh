@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Install the llm-d Router in standalone mode (Envoy + endpoint picker) with one of the scoring configurations
 # in deploy/router/, from its Helm chart at the pinned commit.
-# Usage: scripts/install-router.sh MODE   (load-aware, prefix-aware or prefix-load-aware)
+# Usage: scripts/install-router.sh MODE   (the name of any file in deploy/router/ but common.yaml, e.g. prefix-queue)
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 require_context
 cd "$ROOT"
 
-mode="${1:?usage: install-router.sh load-aware|prefix-aware|prefix-load-aware}"
+mode="${1:?usage: install-router.sh MODE, one of: $(cd deploy/router && ls *.yaml | grep -vx common.yaml | sed s/.yaml$// | tr "\n" " ")}"
 [ -f "deploy/router/$mode.yaml" ] || { echo "no router configuration deploy/router/$mode.yaml" >&2; exit 2; }
 
 src="${ROUTER_SRC:-$(mktemp -d)}"
