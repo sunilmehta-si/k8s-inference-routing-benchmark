@@ -1,0 +1,26 @@
+# prefix-queue: weigh the cached prefix and the waiting queue equally, the queue rescaled across the pods compared.
+# The router's queue-scorer gives the pod with the shortest queue 1 and the longest 0, so any difference in waiting
+# requests spans the prefix score's whole range; the load-aware scorer tops out at 0.5. Pods with equal queues all
+# score 1, so it only moves a choice when some pods have requests waiting.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: queue-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: queue-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker

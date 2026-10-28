@@ -8,7 +8,16 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
-KNOWN_PLUGINS = {"single-profile-handler", "decode-filter", "max-score-picker", "prefix-cache-scorer", "load-aware-scorer"}
+KNOWN_PLUGINS = {
+    "single-profile-handler",
+    "decode-filter",
+    "max-score-picker",
+    "prefix-cache-scorer",
+    "load-aware-scorer",
+    "queue-scorer",
+}
+# Modes that are prefix-load-aware with the load-aware scorer swapped for another of the router's load scorers.
+SWAPPED_LOAD_SCORERS = {"prefix-queue": "queue-scorer"}
 
 
 def versions() -> dict[str, str]:
@@ -103,7 +112,8 @@ class RouterConfigTests(unittest.TestCase):
         self.assertEqual(scorers, {"load-aware": ["load-aware-scorer"], "prefix-aware": ["prefix-cache-scorer"],
                                    "prefix-load-aware": ["load-aware-scorer", "prefix-cache-scorer"],
                                    "prefix-load-2x": ["load-aware-scorer", "prefix-cache-scorer"],
-                                   "prefix-load-q8": ["load-aware-scorer", "prefix-cache-scorer"]})
+                                   "prefix-load-q8": ["load-aware-scorer", "prefix-cache-scorer"],
+                                   "prefix-queue": ["prefix-cache-scorer", "queue-scorer"]})
 
     def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
         def config(mode):
@@ -118,6 +128,15 @@ class RouterConfigTests(unittest.TestCase):
         self.assertEqual(yaml.safe_load(sims[0]["data"]["config.yaml"])["max-num-seqs"], 8)
         self.assertEqual([p for p in q8["plugins"] if p["type"] != "load-aware-scorer"],
                          [p for p in equal["plugins"] if p["type"] != "load-aware-scorer"])
+
+    def test_the_other_load_scorers_replace_load_aware_and_change_nothing_else(self):
+        def config(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            return yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+        base = yaml.safe_dump(config("prefix-load-aware"))
+        for mode, scorer in SWAPPED_LOAD_SCORERS.items():
+            with self.subTest(mode=mode):
+                self.assertEqual(yaml.safe_dump(config(mode)), base.replace("load-aware-scorer", scorer))
 
     def test_prefix_load_2x_differs_from_prefix_load_aware_only_in_the_load_weight(self):
         def profile(mode):

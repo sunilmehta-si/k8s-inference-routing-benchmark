@@ -60,7 +60,7 @@ jobs:
           chart="$src/config/charts/llm-d-router-standalone"
           helm dependency build "$chart" >/dev/null
           name_tag="${EPP_IMAGE##*/}"
-          for mode in load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8; do
+          for mode in load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8 prefix-queue; do
             helm template router "$chart" --namespace irb -f deploy/router/common.yaml -f "deploy/router/$mode.yaml" \
               --set "router.epp.image.registry=${EPP_IMAGE%/*}" --set "router.epp.image.repository=${name_tag%%:*}" \
               --set-string "router.epp.image.tag=${name_tag#*:}" --set "router.proxy.image=${ENVOY_IMAGE}" > "$RUNNER_TEMP/$mode.yaml"
