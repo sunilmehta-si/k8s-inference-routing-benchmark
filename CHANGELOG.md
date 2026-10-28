@@ -16,8 +16,17 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   either: the load score tops out at 0.5 while a held prefix scores near 1, so weight and threshold have to move
   together.
 - The cluster workflow takes a `modes` input to run some of the routers.
+- Routers `prefix-queue`, `prefix-running` and `prefix-active`: `prefix-load-aware` with the load scorer swapped for
+  the router's queue, running-requests or active-request scorer, which rescale their signal across the pods to 0-1.
+- Router `router-default`: the chart's default scoring (queue 2, KV-cache utilization 2, prefix 3). The CI chart job
+  fails if the pinned chart's default stops matching it.
+- The CI chart job fails when a router configuration names a plugin type the pinned router does not register, before
+  any cluster run.
+- `docs/scorers.md`: what each scorer reads and how far apart it can put two pods, at the pinned commit.
 
 ### Fixed
+- The cluster report compared six routers named by hand; it now compares every router the run measured.
+- The README and methodology said `load-aware` reads queued and running work; it reads the waiting queue only.
 - One request in 1,672 could fail with a broken pipe: the render server closed idle connections after vLLM's 5 s
   default while the simulators reuse them for 90 s. It now keeps them for 120 s.
 
