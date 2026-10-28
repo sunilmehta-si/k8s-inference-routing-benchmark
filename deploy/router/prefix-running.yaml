@@ -1,0 +1,26 @@
+# prefix-running: weigh the cached prefix and the requests each pod is running equally, rescaled across the pods.
+# The router's running-requests-size-scorer gives the pod running the fewest requests 1 and the most 0. The running
+# count moves with every request a pod admits or finishes, so unlike the waiting queue it differs between pods even
+# when none of them has requests waiting.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: running-requests-size-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: running-requests-size-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
