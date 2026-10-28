@@ -138,3 +138,10 @@ class QueueThresholdResultsTests(_OneRunDataset, unittest.TestCase):
             self.assertIn((metric, "load-aware", "prefix-load-q8"), self.found)
         self.assertIn(("Prefix-cache hit rate", "prefix-load-q8", "load-aware"), self.found)
         self.assertEqual({f for f in self.found if {f[1], f[2]} == {"prefix-load-aware", "prefix-load-q8"}}, set())
+
+
+class ScorerResultsTests(_OneRunDataset, unittest.TestCase):
+    """Do the router's other load scorers, which rescale across the pods, spread the work?"""
+    DIR, REPORT_TITLE = "scorers", "scorers (chat-rag-mix)"
+    MODES_HERE = ("load-aware", "prefix-load-aware", "router-default", "prefix-queue", "prefix-running", "prefix-active")
+    TITLE = "The router's load scorers next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests"
