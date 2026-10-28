@@ -55,9 +55,10 @@ Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-infer
 
 `round-robin` is a ClusterIP Service. The others are the [llm-d Router](https://github.com/llm-d/llm-d-router)
 v1.0.0 in standalone mode: Envoy in the endpoint picker's pod, asking it over ext_proc where each request should go.
-The five configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters:
+The nine configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters
+([what each scorer reads and scores](scorers.md)):
 
-- `load-aware`: `load-aware-scorer`, from the pods' queue and running counts.
+- `load-aware`: `load-aware-scorer`, from the pods' waiting queues (it does not read running counts).
 - `prefix-aware`: `prefix-cache-scorer` in its default estimate mode: the picker remembers which pod it sent each
   prompt's blocks to and prefers the pod with the longest match. It does not read the pods' caches.
 - `prefix-load-aware`: both, weight 1.0 each, the router's own estimated-prefix sample configuration.
@@ -65,6 +66,13 @@ The five configurations in [`deploy/router/`](../deploy/router/) differ only in 
   two pods in every run; this asks whether favouring load keeps the cache hits and spreads the work.
 - `prefix-load-q8`: both at weight 1.0, with the load scorer's queue threshold at 8 instead of 128. The scorer gives
   `0.5 × (1 − waiting / threshold)`, so with 128 a few waiting requests barely register; 8 is the pods' concurrency.
+- `prefix-queue`, `prefix-running`, `prefix-active`: `prefix-load-aware` with `load-aware-scorer` swapped for
+  `queue-scorer`, `running-requests-size-scorer` or `active-request-scorer`. Those three rescale their signal across
+  the pods being compared, so the least loaded pod scores 1 and the most loaded 0, twice the gap `load-aware` can
+  make. `prefix-active` counts the router's own requests in flight rather than scraped metrics.
+- `router-default`: the scoring the router chart installs by default (`queue-scorer` 2, `kv-cache-utilization-scorer`
+  2, `prefix-cache-scorer` 3), on the same filter and picker as the rest. The CI chart job fails if the chart's
+  default at the pinned commit stops matching it.
 
 Shared settings ([`common.yaml`](../deploy/router/common.yaml)): the simulated pods as the `InferencePool`, fail
 closed both in the pool and in Envoy, and resource requests a CI runner can hold (the chart's defaults ask for 12
