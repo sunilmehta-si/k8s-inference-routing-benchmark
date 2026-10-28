@@ -22,7 +22,12 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   fails if the pinned chart's default stops matching it.
 - The CI chart job fails when a router configuration names a plugin type the pinned router does not register, before
   any cluster run.
-- `docs/scorers.md`: what each scorer reads and how far apart it can put two pods, at the pinned commit.
+- `docs/scorers.md`: what each scorer reads and how far apart it can put two pods, at the pinned commit, with the
+  predictions written before the runs and what the runs showed.
+- Eight runs each of the four new routers beside load-aware and prefix-load-aware in `results/scorers/`. The rescaled
+  scorers spread the work: `prefix-active` beat prefix-load-aware on median, p95 and p99 time to first token, goodput
+  and balance in every run, at four points less hit rate; `prefix-running` spread it most evenly; the chart's default
+  kept the most cache hits.
 
 ### Fixed
 - The cluster report compared six routers named by hand; it now compares every router the run measured.
