@@ -60,7 +60,7 @@ jobs:
           chart="$src/config/charts/llm-d-router-standalone"
           helm dependency build "$chart" >/dev/null
           name_tag="${EPP_IMAGE##*/}"
-          for mode in load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8 prefix-queue prefix-running prefix-active; do
+          for mode in load-aware prefix-aware prefix-load-aware prefix-load-2x prefix-load-q8 prefix-queue prefix-running prefix-active router-default; do
             helm template router "$chart" --namespace irb -f deploy/router/common.yaml -f "deploy/router/$mode.yaml" \
               --set "router.epp.image.registry=${EPP_IMAGE%/*}" --set "router.epp.image.repository=${name_tag%%:*}" \
               --set-string "router.epp.image.tag=${name_tag#*:}" --set "router.proxy.image=${ENVOY_IMAGE}" > "$RUNNER_TEMP/$mode.yaml"
@@ -70,6 +70,17 @@ jobs:
             grep -q "failure_mode_allow: false" "$RUNNER_TEMP/$mode.yaml"
             echo "$mode: renders with the pinned images and fails closed"
           done
+      - name: router-default scores like the chart's own default
+        # The chart's default-plugins.yaml is what a plain install runs; when a router bump changes its weights, the
+        # benchmark's copy must change with it or it stops measuring the default.
+        run: |
+          src="$RUNNER_TEMP/router"
+          weights() { awk '/pluginRef:/ {ref=$NF} /weight:/ {printf "%s=%g\n", ref, $NF}' | sort; }
+          chart_default=$(helm template router "$src/config/charts/llm-d-router-standalone" --namespace irb -f deploy/router/common.yaml \
+            | awk '/^  default-plugins.yaml: \|/ {on=1; next} on && /^  [^ ]/ {on=0} on' | weights)
+          ours=$(weights < deploy/router/router-default.yaml)
+          echo "chart default: $(echo $chart_default)"
+          [ -n "$chart_default" ] && [ "$chart_default" = "$ours" ] || { echo "::error::router-default has $(echo $ours)"; exit 1; }
       - name: Every plugin type is one the pinned router registers
         # A misspelled type passes helm and fails only when the picker starts on a cluster, most of an hour into a run.
         run: |

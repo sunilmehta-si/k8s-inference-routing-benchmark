@@ -17,6 +17,7 @@ KNOWN_PLUGINS = {
     "queue-scorer",
     "running-requests-size-scorer",
     "active-request-scorer",
+    "kv-cache-utilization-scorer",
 }
 # Modes that are prefix-load-aware with the load-aware scorer swapped for another of the router's load scorers.
 SWAPPED_LOAD_SCORERS = {"prefix-queue": "queue-scorer", "prefix-running": "running-requests-size-scorer",
@@ -118,7 +119,8 @@ class RouterConfigTests(unittest.TestCase):
                                    "prefix-load-q8": ["load-aware-scorer", "prefix-cache-scorer"],
                                    "prefix-queue": ["prefix-cache-scorer", "queue-scorer"],
                                    "prefix-running": ["prefix-cache-scorer", "running-requests-size-scorer"],
-                                   "prefix-active": ["active-request-scorer", "prefix-cache-scorer"]})
+                                   "prefix-active": ["active-request-scorer", "prefix-cache-scorer"],
+                                   "router-default": ["kv-cache-utilization-scorer", "prefix-cache-scorer", "queue-scorer"]})
 
     def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
         def config(mode):
@@ -142,6 +144,15 @@ class RouterConfigTests(unittest.TestCase):
         for mode, scorer in SWAPPED_LOAD_SCORERS.items():
             with self.subTest(mode=mode):
                 self.assertEqual(yaml.safe_dump(config(mode)), base.replace("load-aware-scorer", scorer))
+
+    def test_router_default_has_the_charts_default_weights_on_the_common_base(self):
+        epp = yaml.safe_load((ROOT / "deploy/router/router-default.yaml").read_text())["router"]["epp"]
+        config = yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+        weights = {p["pluginRef"]: p.get("weight") for p in config["schedulingProfiles"][0]["plugins"]}
+        # config/charts/routerlib/templates/_config.yaml at ROUTER_COMMIT; the chart job re-checks it against a render
+        self.assertEqual(weights, {"decode-filter": None, "queue-scorer": 2.0, "kv-cache-utilization-scorer": 2.0,
+                                   "prefix-cache-scorer": 3.0, "max-score-picker": None})
+        self.assertIn("router-default scores like the chart's own default", (ROOT / ".github/workflows/ci.yml").read_text())
 
     def test_prefix_load_2x_differs_from_prefix_load_aware_only_in_the_load_weight(self):
         def profile(mode):

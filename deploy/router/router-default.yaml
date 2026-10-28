@@ -1,0 +1,29 @@
+# router-default: the llm-d Router chart's own default scoring, queue 2, KV-cache utilization 2 and cached prefix 3.
+# The weights are default-plugins.yaml in config/charts/routerlib at the pinned commit (CI checks they still match),
+# here on the same filter and picker as every other mode. The KV-cache scorer gives a pod 1 minus the share of its
+# cache that running requests hold, so it, like the queue scorer, has a say only when the pods differ in load.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: queue-scorer
+        - type: kv-cache-utilization-scorer
+        - type: prefix-cache-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: queue-scorer
+            weight: 2.0
+          - pluginRef: kv-cache-utilization-scorer
+            weight: 2.0
+          - pluginRef: prefix-cache-scorer
+            weight: 3.0
+          - pluginRef: max-score-picker
