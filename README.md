@@ -12,7 +12,7 @@ prefix cache over real token blocks.
 | Router | What it looks at |
 |---|---|
 | `round-robin` | Nothing: a Kubernetes Service, which kube-proxy spreads over the pods per connection. |
-| `load-aware` | Each pod's queued and running work, from the pods' own vLLM metrics. |
+| `load-aware` | Each pod's waiting queue, from the pods' own vLLM metrics: 0.5 when empty, falling to 0 at 128 waiting. |
 | `prefix-aware` | Which pod most likely holds the longest prefix of this prompt in its cache. |
 | `prefix-load-aware` | Both, weighted equally. |
 | `prefix-load-2x` | Both, with load weighted twice the prefix. |
