@@ -145,3 +145,31 @@ class ScorerResultsTests(_OneRunDataset, unittest.TestCase):
     DIR, REPORT_TITLE = "scorers", "scorers (chat-rag-mix)"
     MODES_HERE = ("load-aware", "prefix-load-aware", "router-default", "prefix-queue", "prefix-running", "prefix-active")
     TITLE = "The router's load scorers next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_the_other_load_scorers(self):
+        others = set(self.MODES_HERE)
+        # prefix-active: better than prefix-load-aware on latency, goodput and balance, and than load-aware on latency,
+        # goodput and hits, at the same balance; prefix-load-aware keeps more hits
+        for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Goodput", "Load balance"):
+            self.assertIn((metric, "prefix-active", "prefix-load-aware"), self.found)
+        for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Goodput", "Prefix-cache hit rate"):
+            self.assertIn((metric, "prefix-active", "load-aware"), self.found)
+        self.assertIn(("Prefix-cache hit rate", "prefix-load-aware", "prefix-active"), self.found)
+        self.assertNotIn("Load balance", {f[0] for f in self.found if {f[1], f[2]} == {"load-aware", "prefix-active"}})
+        # prefix-running: most even of the prefix routers, fewest hits of them; prefix-active beats it on tail and hits
+        for other in others - {"load-aware", "prefix-running"}:
+            self.assertIn(("Load balance", "prefix-running", other), self.found)
+            self.assertIn(("Prefix-cache hit rate", other, "prefix-running"), self.found)
+        for metric in ("TTFT p95", "TTFT p99", "Prefix-cache hit rate"):
+            self.assertIn((metric, "prefix-active", "prefix-running"), self.found)
+        # prefix-queue: balance near prefix-load-aware's and below load-aware's; lower median than prefix-load-aware
+        self.assertIn(("Load balance", "load-aware", "prefix-queue"), self.found)
+        self.assertIn(("TTFT p50", "prefix-queue", "prefix-load-aware"), self.found)
+        # router-default: more hits than every router but prefix-queue in every run (against prefix-queue only by
+        # median), better latencies than prefix-load-aware, still less even than load-aware
+        for other in others - {"router-default", "prefix-queue"}:
+            self.assertIn(("Prefix-cache hit rate", "router-default", other), self.found)
+        self.assertNotIn("Prefix-cache hit rate", {f[0] for f in self.found if {f[1], f[2]} == {"router-default", "prefix-queue"}})
+        for metric in ("TTFT p50", "TTFT p95", "TTFT p99"):
+            self.assertIn((metric, "router-default", "prefix-load-aware"), self.found)
+        self.assertIn(("Load balance", "load-aware", "router-default"), self.found)

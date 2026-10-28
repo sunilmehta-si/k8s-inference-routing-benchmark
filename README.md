@@ -137,6 +137,40 @@ times each in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routin
   threshold near the pods' concurrency, together, or with a load scorer whose scores span 0 to 1. The router has
   three of those; [what each scorer reads and how far apart it can put two pods](docs/scorers.md).
 
+### Do the router's other load scorers spread the work?
+
+Yes, the ones that rescale load across the pods. `prefix-queue`, `prefix-running` and `prefix-active` swap the load
+scorer for one that gives the least loaded pod 1 and the most loaded 0; `router-default` is the chart's own scoring.
+Each ran eight times beside load-aware and prefix-load-aware in
+[one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40650965766). [Full results](results/scorers/README.md). Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| load-aware | 110 ms | 685 ms | 874 ms | 64.2% | 0.95 | 99.5% |
+| prefix-load-aware | 91 ms | 680 ms | 1,007 ms | 80.2% | 0.61 | 98.9% |
+| router-default | 78 ms | 478 ms | 808 ms | 82.9% | 0.68 | 99.5% |
+| prefix-queue | 84 ms | 612 ms | 902 ms | 80.7% | 0.66 | 99.2% |
+| prefix-running | 80 ms | 595 ms | 754 ms | 69.5% | 0.98 | 99.6% |
+| prefix-active | **74 ms** | 536 ms | **692 ms** | 76.4% | 0.95 | **99.7%** |
+
+- **`prefix-active` was the best all-round router measured so far.** In every run it beat prefix-load-aware on
+  median, p95 and p99 time to first token, goodput and balance, and beat load-aware on all of those latencies, goodput
+  and cache hits while spreading the work as evenly. It paid about four points of hit rate against prefix-load-aware.
+- **`prefix-running` spread the work most evenly** (0.98, better than every other prefix router in every run) and
+  kept the fewest cache hits of them (70%): it ranks pods by running requests, so it outvotes a prefix match more
+  often. `prefix-active`, which counts the requests the router itself has in flight rather than scraped metrics,
+  beat it on p95, p99 and hit rate in every run.
+- **The queue scorer changed the least.** Balance stayed near prefix-load-aware's (0.66) and below load-aware's in
+  every run, as expected: queues only differ when some pod has requests waiting. It still had a lower median than
+  prefix-load-aware in every run.
+- **The chart's default kept the most cache hits** (83% median; more than every router but `prefix-queue` in every
+  run) and had the best p95, beating prefix-load-aware on median, p95 and p99 in every run, but kept much of the
+  pile-up (balance 0.68).
+- **Why rescaling works where weight and threshold did not.** A rescaled scorer gives the busiest pod 0. When prefix
+  routing piles requests onto a pod, that pod becomes the busiest, so it loses a full point exactly when the pile-up
+  starts; `load-aware` can never take away more than 0.5. [The scorer reference](docs/scorers.md) has the formulas,
+  and the predictions written before this run, two of which were wrong.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
