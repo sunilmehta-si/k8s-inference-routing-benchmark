@@ -70,3 +70,12 @@ jobs:
             grep -q "failure_mode_allow: false" "$RUNNER_TEMP/$mode.yaml"
             echo "$mode: renders with the pinned images and fails closed"
           done
+      - name: Every plugin type is one the pinned router registers
+        # A misspelled type passes helm and fails only when the picker starts on a cluster, most of an hour into a run.
+        run: |
+          . deploy/versions.env
+          src="$RUNNER_TEMP/router"
+          for type in $(grep -ho -- '- type: [a-z0-9-]*' deploy/router/*.yaml | awk '{print $3}' | sort -u); do
+            grep -rqF --include='*.go' "\"$type\"" "$src/pkg" || { echo "::error::$type is not a plugin type at $ROUTER_COMMIT"; exit 1; }
+            echo "$type: registered"
+          done

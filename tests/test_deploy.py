@@ -176,6 +176,7 @@ class WorkflowTests(unittest.TestCase):
         for router in routers:
             self.assertIn(router, chart_job)
             self.assertIn(router, run["strategy"]["matrix"]["mode"])
+        self.assertIn("is not a plugin type at $ROUTER_COMMIT", chart_job)            # typos fail before a cluster run
         steps = "\n".join(s.get("run", "") for s in run["steps"])
         self.assertIn("scripts/cluster-up.sh", steps)                                  # every repeat builds its own cluster
         self.assertIn('scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"', steps)
