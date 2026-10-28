@@ -3,7 +3,7 @@
 [![ci](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml) [![cluster](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml)
 
 **How much does the router in front of your LLM servers matter?** This project answers that with numbers. It replays
-the same chat and RAG traffic through four ways of spreading requests over vLLM pods on Kubernetes and measures what
+the same chat and RAG traffic through ten ways of spreading requests over vLLM pods on Kubernetes and measures what
 users feel (time to first token), what the cluster does (prefix-cache hits, load spread, throughput) and whether
 requests meet a latency objective. **No GPUs are needed**: the model servers are the
 [llm-d vLLM simulator](https://github.com/llm-d/llm-d-inference-sim), which models prefill, decode, load and a real
@@ -26,6 +26,12 @@ The last nine are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0
 that implements the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension)'s
 `InferencePool`) with one scoring configuration changed between them. Everything else, the trace, the model servers,
 their latency profile and cache, is identical, and every router starts on its own cluster with empty caches.
+
+**The short answer so far.** Prefix-aware routing finds the cache (pod hit rate 64% to 80%) but piles the work onto
+two of four pods, and the router's `load-aware` scorer did not undo that at any weight or threshold tried. Swapping it
+for the router's `active-request-scorer` did: in eight runs `prefix-active` beat prefix-plus-load on median, p95 and
+p99 time to first token and spread the work as evenly as load-aware routing, keeping 76% hits.
+[The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) has the numbers.
 
 ## Why prefix caching decides this
 
@@ -239,7 +245,7 @@ make cluster MODE=prefix-load-aware
 | Repeated runs, reported as median and range | Done: eight runs per router committed, three per CI run |
 | A heavier load weight next to the prefix scorer | Done: no change, eight runs of every router |
 | The load scorer's queue threshold at the pods' concurrency | Done: no change on its own, eight runs |
-| The router's three rescaled load scorers and its chart default, next to the prefix scorer | Running: eight runs of six routers |
+| The router's three rescaled load scorers and its chart default, next to the prefix scorer | Done: they spread the work; `prefix-active` best overall, eight runs |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
