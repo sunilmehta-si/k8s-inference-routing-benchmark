@@ -17,8 +17,12 @@ prefix cache over real token blocks.
 | `prefix-load-aware` | Both, weighted equally. |
 | `prefix-load-2x` | Both, with load weighted twice the prefix. |
 | `prefix-load-q8` | Both, weighted equally, with the load scorer's queue threshold at the pods' concurrency (8). |
+| `prefix-queue` | The prefix and the waiting queue, weighted equally, the queue rescaled across the pods (shortest 1, longest 0). |
+| `prefix-running` | The prefix and the requests each pod is running, weighted equally, rescaled the same way. |
+| `prefix-active` | The prefix and the requests the router itself has in flight to each pod, weighted equally. |
+| `router-default` | The router chart's own default: waiting queue 2, KV-cache utilization 2, prefix 3. |
 
-The last five are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
+The last nine are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
 that implements the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension)'s
 `InferencePool`) with one scoring configuration changed between them. Everything else, the trace, the model servers,
 their latency profile and cache, is identical, and every router starts on its own cluster with empty caches.
