@@ -134,7 +134,8 @@ times each in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routin
   gap, so the pod holding the prefix wins however long its queue. Lowering the threshold lets load reach that 0.5
   sooner; it cannot make it larger.
 - **What should work, then.** Load can outweigh a full prefix match only with its weight above about 2 and the
-  threshold near the pods' concurrency, together. That pair is the next configuration to measure.
+  threshold near the pods' concurrency, together, or with a load scorer whose scores span 0 to 1. The router has
+  three of those; [what each scorer reads and how far apart it can put two pods](docs/scorers.md).
 
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
@@ -204,7 +205,8 @@ make cluster MODE=prefix-load-aware
 | Repeated runs, reported as median and range | Done: eight runs per router committed, three per CI run |
 | A heavier load weight next to the prefix scorer | Done: no change, eight runs of every router |
 | The load scorer's queue threshold at the pods' concurrency | Done: no change on its own, eight runs |
-| Load weight above 2 with the threshold at 8, and precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
+| The router's three rescaled load scorers and its chart default, next to the prefix scorer | Running: eight runs of six routers |
+| Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
