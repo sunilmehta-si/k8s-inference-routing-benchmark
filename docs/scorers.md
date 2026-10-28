@@ -36,3 +36,23 @@ Written before the runs of the last four modes, so the results can prove it wron
   three it should change the least.
 - `router-default` weights the prefix 3 and each load signal 2, so a full prefix match (about 3) can only be beaten
   when the busy pod is the busiest by both queue and KV-cache usage. Expect it to behave much like `prefix-aware`.
+
+## What happened
+
+Eight runs of each in [one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40650965766)
+([results](../results/scorers/README.md)). Two predictions held, two did not.
+
+- **Held: `load-aware` cannot undo the pile-up.** Its balance was again far above prefix-load-aware's (0.95 against
+  0.61), and prefix-load-aware again sent most requests to a few pods.
+- **Wrong: the rescaled scorers would move only some traffic.** `prefix-running` (balance 0.98) and `prefix-active`
+  (0.95) spread the work as evenly as `load-aware`. The prediction got the mechanism right and the frequency wrong:
+  a rescaled scorer acts when the pod holding the prefix is the busiest, and a pile-up makes it the busiest, so the
+  extreme case is every case that matters. Each request that lands on the busiest pod makes the next one less likely
+  to.
+- **Held: `queue-scorer` changes the least.** Balance 0.66, close to prefix-load-aware's and below load-aware's in
+  every run. Queues rarely differ at this load.
+- **Partly wrong: `router-default` would behave like `prefix-aware`.** It kept prefix routing's cache hits (83%, the
+  most of any router here) and much of its pile-up (0.68), as predicted, but it beat prefix-load-aware on median,
+  p95 and p99 in every run and had the best p95 of all six. A likely reason, not measured here: the weight-3 prefix
+  match decides when one pod clearly holds the prompt, and the two load signals at weight 2 decide between pods whose
+  matches are close, a case the prediction did not consider.
