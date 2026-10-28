@@ -22,7 +22,7 @@ on:
         default: "[1, 2, 3]"
       modes:
         description: Routers to run (JSON list)
-        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running"]'
+        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active"]'
   schedule:
     - cron: "41 3 * * 1"
 
@@ -47,7 +47,7 @@ jobs:
         # GitHub starts a run's jobs in no fixed order but within minutes of each other (40 jobs in under six), so the
         # runs of one dispatch share a time window whatever their repeat number.
         repeat: ${{ fromJSON(inputs.repeats || '[1, 2, 3]') }}
-        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running"]') }}
+        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active"]') }}
     env:
       MODE: ${{ matrix.mode }}
       REPEAT: ${{ matrix.repeat }}

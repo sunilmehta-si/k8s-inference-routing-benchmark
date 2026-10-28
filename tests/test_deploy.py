@@ -16,9 +16,11 @@ KNOWN_PLUGINS = {
     "load-aware-scorer",
     "queue-scorer",
     "running-requests-size-scorer",
+    "active-request-scorer",
 }
 # Modes that are prefix-load-aware with the load-aware scorer swapped for another of the router's load scorers.
-SWAPPED_LOAD_SCORERS = {"prefix-queue": "queue-scorer", "prefix-running": "running-requests-size-scorer"}
+SWAPPED_LOAD_SCORERS = {"prefix-queue": "queue-scorer", "prefix-running": "running-requests-size-scorer",
+                        "prefix-active": "active-request-scorer"}
 
 
 def versions() -> dict[str, str]:
@@ -115,7 +117,8 @@ class RouterConfigTests(unittest.TestCase):
                                    "prefix-load-2x": ["load-aware-scorer", "prefix-cache-scorer"],
                                    "prefix-load-q8": ["load-aware-scorer", "prefix-cache-scorer"],
                                    "prefix-queue": ["prefix-cache-scorer", "queue-scorer"],
-                                   "prefix-running": ["prefix-cache-scorer", "running-requests-size-scorer"]})
+                                   "prefix-running": ["prefix-cache-scorer", "running-requests-size-scorer"],
+                                   "prefix-active": ["active-request-scorer", "prefix-cache-scorer"]})
 
     def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
         def config(mode):

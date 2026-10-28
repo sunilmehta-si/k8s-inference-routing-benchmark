@@ -1,0 +1,25 @@
+# prefix-active: weigh the cached prefix and the requests the router itself has in flight to each pod equally.
+# The router's active-request-scorer counts what it sent and has not seen finish, so it reacts to a burst before
+# the pods' metrics are next scraped. Idle pods score 1, the busiest 0, the rest in proportion to the busiest.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: active-request-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: active-request-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
