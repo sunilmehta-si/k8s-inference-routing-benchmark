@@ -100,6 +100,12 @@ run, and `irb compare` pairs them.
 README states a difference between two routers only when it held in every repeat; a difference that changes sign
 between repeats is reported as no difference, however large one run made it look.
 
+A difference between two routers counts only when both ran in the same CI run. Runs on different days share the
+trace and the pins but not the runners, and the scorer comparison and the weight comparison each said their best
+router had "the most cache hits of any router", by about half a point, from different runs. Put in the same run,
+the two were not reliably different ([head-to-head](../results/head-to-head/README.md)). A superlative across
+datasets is a lead to test in one run, not a result.
+
 ## Limits
 
 - **A simulator is not a GPU.** It reproduces the timing model and the cache, not kernel effects such as batching
