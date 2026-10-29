@@ -56,3 +56,12 @@ Eight runs of each in [one CI run](https://github.com/sunilmehta-si/k8s-inferenc
   p95 and p99 in every run and had the best p95 of all six. A likely reason, not measured here: the weight-3 prefix
   match decides when one pod clearly holds the prompt, and the two load signals at weight 2 decide between pods whose
   matches are close, a case the prediction did not consider.
+
+## Weights around prefix-active
+
+[Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the
+in-flight count at weight 2. The prefix at 2 kept the most cache hits of any router (83%) with the best p95 and p99,
+at balance 0.85; the count at 2 spread the work most evenly and was slower at every percentile. The in-flight count
+already spans 0 to 1, so doubling it only lets an evenly loaded pod outvote a cached one more often, and a cache miss
+costs more than a short wait. Doubling the prefix instead lets the count act only when a pod is far busier than the
+rest, which is the pile-up case.

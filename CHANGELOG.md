@@ -32,6 +32,9 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 - Routers `prefix-active-p2` and `prefix-active-a2`: `prefix-active` with the prefix, then the in-flight count, at
   weight 2.
 - The chart shows each router's load balance beside its prefix-cache hits.
+- Eight runs each of the two weight variants beside `prefix-active` in `results/active-weights/`: the prefix at
+  weight 2 gave the most cache hits of any router here (83%) and the best p95 and p99, at some spread; the in-flight
+  count at weight 2 spread the work most evenly and was slower at every percentile.
 
 ### Fixed
 - The cluster report compared six routers named by hand; it now compares every router the run measured.
