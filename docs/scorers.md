@@ -65,3 +65,9 @@ at balance 0.85; the count at 2 spread the work most evenly and was slower at ev
 already spans 0 to 1, so doubling it only lets an evenly loaded pod outvote a cached one more often, and a cache miss
 costs more than a short wait. Doubling the prefix instead lets the count act only when a pod is far busier than the
 rest, which is the pile-up case.
+
+In [the same run](../results/head-to-head/README.md), `prefix-active-p2` and `router-default` were not reliably
+different on latency or hits: both keep about 83% of the prompts' blocks cached. They differ in what breaks a
+near-tie. The chart's default adds two scraped signals at weight 2 each, so its tie-breaks see the pods as they were
+at the last scrape; `prefix-active-p2` adds the router's own count, which changes with every request it sends, and
+spread the work better in seven runs of eight.

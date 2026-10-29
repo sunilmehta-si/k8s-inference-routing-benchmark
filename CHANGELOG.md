@@ -4,6 +4,11 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Eight runs of `prefix-active-p2` and `router-default` in the same CI run, with prefix-only and round-robin, in
+  `results/head-to-head/`. Between the two nothing held on latency or hits; p2 spread the work better in seven runs
+  of eight, and one of its runs had a p99 of 3.3 s.
+
 ## [0.2.0] - 2026-10-29
 
 The load scorer that spreads the work. Tuning the router's `load-aware` scorer never undid the pile-up prefix routing
