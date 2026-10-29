@@ -179,6 +179,29 @@ Each ran eight times beside load-aware and prefix-load-aware in
   starts; `load-aware` can never take away more than 0.5. [The scorer reference](docs/scorers.md) has the formulas,
   and the predictions written before this run, two of which were wrong.
 
+### What does each weight buy prefix-active?
+
+`prefix-active-p2` weights the prefix twice the in-flight count, `prefix-active-a2` the other way round. Eight runs
+of each beside `prefix-active` in
+[one CI run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40837974457). [Full results](results/active-weights/README.md). Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| prefix-active | **71 ms** | 523 ms | 704 ms | 76.7% | 0.95 | **99.7%** |
+| prefix-active-p2 | 75 ms | **461 ms** | **657 ms** | **83.4%** | 0.85 | 99.6% |
+| prefix-active-a2 | 80 ms | 587 ms | 724 ms | 69.4% | **0.97** | 99.6% |
+
+- **Weighting the prefix twice bought the most cache hits of any router measured here**, 83%, against the 86% the
+  trace allows, and the best p95 and p99. It beat `prefix-active` on p95 and hits in every run, for chat and RAG
+  traffic in every run, for one-off prompts in six of eight, and on p99 in seven of eight. The price was spread:
+  balance 0.85, below `prefix-active`'s in every run, though well clear of the 0.6 the pile-up gave.
+- **Weighting the in-flight count twice bought nothing.** It spread the work most evenly but lost hits (69%) and
+  was slower than `prefix-active` at p50, p95 and p99 in every run: an evenly loaded pod that has to prefill a
+  document costs more than a slightly busier one that has it cached.
+- **The median moved the other way, and not reliably.** `prefix-active` had the lower median than p2 in seven runs
+  of eight and the higher goodput in six; the heavier prefix shows up in the tail, where a request that misses its
+  cache waits longest.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -248,6 +271,7 @@ make cluster MODE=prefix-load-aware
 | A heavier load weight next to the prefix scorer | Done: no change, eight runs of every router |
 | The load scorer's queue threshold at the pods' concurrency | Done: no change on its own, eight runs |
 | The router's three rescaled load scorers and its chart default, next to the prefix scorer | Done: they spread the work; `prefix-active` best overall, eight runs |
+| The prefix and in-flight weights around `prefix-active` | Done: prefix 2 gives the most hits and the best tail, eight runs |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 

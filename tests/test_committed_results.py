@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from inference_routing_bench.chart import svg
-from inference_routing_bench.compare import held
+from inference_routing_bench.compare import held, pairs
 from inference_routing_bench.report import markdown
 from inference_routing_bench.results import by_mode, comparable, load
 
@@ -180,3 +180,17 @@ class ActiveWeightResultsTests(_OneRunDataset, unittest.TestCase):
     DIR, REPORT_TITLE = "active-weights", "active-weights (chat-rag-mix)"
     MODES_HERE = ("prefix-active", "prefix-active-p2", "prefix-active-a2")
     TITLE = "prefix-active with the prefix, then the in-flight count, weighted twice: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_the_weights(self):
+        for metric in ("TTFT p95", "Prefix-cache hit rate", "Chat TTFT p95", "RAG TTFT p95"):
+            self.assertIn((metric, "prefix-active-p2", "prefix-active"), self.found)
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)
+                if {p.a, p.b} == {"prefix-active", "prefix-active-p2"}}
+        self.assertEqual(wins["TTFT p99"]["prefix-active-p2"], 7)             # "seven of eight"
+        self.assertEqual(wins["One-off TTFT p95"]["prefix-active-p2"], 6)     # "six of eight"
+        self.assertEqual((wins["TTFT p50"]["prefix-active"], wins["Goodput"]["prefix-active"]), (7, 6))
+        self.assertIn(("Load balance", "prefix-active", "prefix-active-p2"), self.found)
+        for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Prefix-cache hit rate"):
+            self.assertIn((metric, "prefix-active", "prefix-active-a2"), self.found)
+        self.assertIn(("Load balance", "prefix-active-a2", "prefix-active-p2"), self.found)
+        self.assertNotIn("TTFT p50", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active", "prefix-active-p2"}})
