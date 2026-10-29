@@ -1,4 +1,5 @@
-"""A dependency-free SVG of the headline: TTFT p50 and p95 per router, with the prefix-cache hit rate beside it.
+"""A dependency-free SVG of the headline: TTFT p50 and p95 per router, with the prefix-cache hit rate and the load
+balance beside it, so the trade the prefix routers make (hits up, spread down) is visible in one row.
 With repeats, the bars are medians and a whisker spans the p95 range."""
 from __future__ import annotations
 
@@ -7,8 +8,10 @@ from html import escape
 
 from .results import by_mode, comparable
 
-W, ROW, LEFT, BAR_W = 760, 44, 150, 380
-P50, P95, HIT = "#2563eb", "#93c5fd", "#059669"
+W, ROW, LEFT, BAR_W, SIDE = 900, 44, 150, 380, 120
+P50, P95, HIT, BAL = "#2563eb", "#93c5fd", "#059669", "#d97706"
+HITS_X = LEFT + BAR_W + 40
+BAL_X = HITS_X + SIDE + 60
 
 
 def _median(runs: list[dict], get) -> float | None:
@@ -27,13 +30,15 @@ def svg(runs: list[dict], title: str) -> str:
            '<rect width="100%" height="100%" fill="#ffffff"/>',
            f'<text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">{escape(title)}</text>',
            f'<text x="{LEFT}" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>',
-           f'<text x="{LEFT + BAR_W + 40}" y="50" fill="#475569">Prefix-cache hits</text>']
+           f'<text x="{HITS_X}" y="50" fill="#475569">Prefix-cache hits</text>',
+           f'<text x="{BAL_X}" y="50" fill="#475569">Load balance</text>']
     for i, (mode, rs) in enumerate(groups):
         y = 66 + i * ROW
         p50 = _median(rs, lambda r: r["summary"]["ttft_ms"]["p50"]) or 0
         p95s = [r["summary"]["ttft_ms"]["p95"] or 0 for r in rs]
         p95 = statistics.median(p95s)
         hit = _median(rs, lambda r: (r.get("pods") or {}).get("prefix_cache_hit_rate"))
+        balance = _median(rs, lambda r: (r.get("pods") or {}).get("balance"))
         label_x = LEFT + max(p95s) * scale + 6
         out += [f'<text x="16" y="{y + 18}" fill="#0f172a">{escape(mode)}</text>',
                 f'<rect x="{LEFT}" y="{y + 4}" width="{p95 * scale:.1f}" height="20" rx="3" fill="{P95}"/>',
@@ -43,8 +48,11 @@ def svg(runs: list[dict], title: str) -> str:
                     f'stroke="#1e3a8a" stroke-width="2"/>']
         out += [f'<text x="{label_x:.1f}" y="{y + 19}" fill="#334155">{p50:,.0f} / {p95:,.0f}</text>']
         if hit is not None:
-            out += [f'<rect x="{LEFT + BAR_W + 40}" y="{y + 4}" width="{hit * 120:.1f}" height="20" rx="3" fill="{HIT}"/>',
-                    f'<text x="{LEFT + BAR_W + 46 + hit * 120:.1f}" y="{y + 19}" fill="#334155">{hit * 100:.0f}%</text>']
+            out += [f'<rect x="{HITS_X}" y="{y + 4}" width="{hit * SIDE:.1f}" height="20" rx="3" fill="{HIT}"/>',
+                    f'<text x="{HITS_X + 6 + hit * SIDE:.1f}" y="{y + 19}" fill="#334155">{hit * 100:.0f}%</text>']
+        if balance is not None:
+            out += [f'<rect x="{BAL_X}" y="{y + 4}" width="{balance * SIDE:.1f}" height="20" rx="3" fill="{BAL}"/>',
+                    f'<text x="{BAL_X + 6 + balance * SIDE:.1f}" y="{y + 19}" fill="#334155">{balance:.2f}</text>']
     n = sorted({len(rs) for _, rs in groups})
     runs_note = "" if n == [1] else f", median of {'/'.join(map(str, n))} runs per router (whisker: p95 range)"
     out += [f'<text x="16" y="{height - 14}" fill="#64748b">{escape(runs[0]["trace"]["name"])}, '

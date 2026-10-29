@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="242" viewBox="0 0 760 242" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="242" viewBox="0 0 900 242" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">Load scorer queue threshold 8 instead of 128: 4 simulated vLLM pods, 1,672 requests</text>
 <text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
 <text x="570" y="50" fill="#475569">Prefix-cache hits</text>
+<text x="750" y="50" fill="#475569">Load balance</text>
 <text x="16" y="84" fill="#0f172a">load-aware</text>
 <rect x="150" y="70" width="291.4" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="70" width="47.6" height="20" rx="3" fill="#2563eb"/>
@@ -10,6 +11,8 @@
 <text x="453.6" y="85" fill="#334155">111 / 679</text>
 <rect x="570" y="70" width="77.0" height="20" rx="3" fill="#059669"/>
 <text x="653.0" y="85" fill="#334155">64%</text>
+<rect x="750" y="70" width="113.8" height="20" rx="3" fill="#d97706"/>
+<text x="869.8" y="85" fill="#334155">0.95</text>
 <text x="16" y="128" fill="#0f172a">prefix-load-aware</text>
 <rect x="150" y="114" width="324.0" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="114" width="40.2" height="20" rx="3" fill="#2563eb"/>
@@ -17,6 +20,8 @@
 <text x="536.0" y="129" fill="#334155">94 / 755</text>
 <rect x="570" y="114" width="96.0" height="20" rx="3" fill="#059669"/>
 <text x="672.0" y="129" fill="#334155">80%</text>
+<rect x="750" y="114" width="66.5" height="20" rx="3" fill="#d97706"/>
+<text x="822.5" y="129" fill="#334155">0.55</text>
 <text x="16" y="172" fill="#0f172a">prefix-load-q8</text>
 <rect x="150" y="158" width="321.9" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="158" width="40.4" height="20" rx="3" fill="#2563eb"/>
@@ -24,5 +29,7 @@
 <text x="530.9" y="173" fill="#334155">94 / 750</text>
 <rect x="570" y="158" width="95.5" height="20" rx="3" fill="#059669"/>
 <text x="671.5" y="173" fill="#334155">80%</text>
+<rect x="750" y="158" width="66.8" height="20" rx="3" fill="#d97706"/>
+<text x="822.8" y="173" fill="#334155">0.56</text>
 <text x="16" y="228" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
 </svg>

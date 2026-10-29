@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="374" viewBox="0 0 760 374" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="374" viewBox="0 0 900 374" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">The router&#x27;s load scorers next to the prefix scorer: 4 simulated vLLM pods, 1,672 requests</text>
 <text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
 <text x="570" y="50" fill="#475569">Prefix-cache hits</text>
+<text x="750" y="50" fill="#475569">Load balance</text>
 <text x="16" y="84" fill="#0f172a">load-aware</text>
 <rect x="150" y="70" width="318.3" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="70" width="50.9" height="20" rx="3" fill="#2563eb"/>
@@ -10,6 +11,8 @@
 <text x="478.6" y="85" fill="#334155">110 / 685</text>
 <rect x="570" y="70" width="77.0" height="20" rx="3" fill="#059669"/>
 <text x="653.0" y="85" fill="#334155">64%</text>
+<rect x="750" y="70" width="113.4" height="20" rx="3" fill="#d97706"/>
+<text x="869.4" y="85" fill="#334155">0.94</text>
 <text x="16" y="128" fill="#0f172a">prefix-load-aware</text>
 <rect x="150" y="114" width="316.0" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="114" width="42.2" height="20" rx="3" fill="#2563eb"/>
@@ -17,6 +20,8 @@
 <text x="536.0" y="129" fill="#334155">91 / 680</text>
 <rect x="570" y="114" width="96.2" height="20" rx="3" fill="#059669"/>
 <text x="672.2" y="129" fill="#334155">80%</text>
+<rect x="750" y="114" width="73.1" height="20" rx="3" fill="#d97706"/>
+<text x="829.1" y="129" fill="#334155">0.61</text>
 <text x="16" y="172" fill="#0f172a">router-default</text>
 <rect x="150" y="158" width="221.9" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="158" width="36.3" height="20" rx="3" fill="#2563eb"/>
@@ -24,6 +29,8 @@
 <text x="432.5" y="173" fill="#334155">78 / 478</text>
 <rect x="570" y="158" width="99.5" height="20" rx="3" fill="#059669"/>
 <text x="675.5" y="173" fill="#334155">83%</text>
+<rect x="750" y="158" width="82.0" height="20" rx="3" fill="#d97706"/>
+<text x="838.0" y="173" fill="#334155">0.68</text>
 <text x="16" y="216" fill="#0f172a">prefix-queue</text>
 <rect x="150" y="202" width="284.3" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="202" width="38.9" height="20" rx="3" fill="#2563eb"/>
@@ -31,6 +38,8 @@
 <text x="488.2" y="217" fill="#334155">84 / 612</text>
 <rect x="570" y="202" width="96.8" height="20" rx="3" fill="#059669"/>
 <text x="672.8" y="217" fill="#334155">81%</text>
+<rect x="750" y="202" width="79.3" height="20" rx="3" fill="#d97706"/>
+<text x="835.3" y="217" fill="#334155">0.66</text>
 <text x="16" y="260" fill="#0f172a">prefix-running</text>
 <rect x="150" y="246" width="276.2" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="246" width="37.3" height="20" rx="3" fill="#2563eb"/>
@@ -38,6 +47,8 @@
 <text x="440.4" y="261" fill="#334155">80 / 595</text>
 <rect x="570" y="246" width="83.4" height="20" rx="3" fill="#059669"/>
 <text x="659.4" y="261" fill="#334155">69%</text>
+<rect x="750" y="246" width="117.4" height="20" rx="3" fill="#d97706"/>
+<text x="873.4" y="261" fill="#334155">0.98</text>
 <text x="16" y="304" fill="#0f172a">prefix-active</text>
 <rect x="150" y="290" width="248.9" height="20" rx="3" fill="#93c5fd"/>
 <rect x="150" y="290" width="34.5" height="20" rx="3" fill="#2563eb"/>
@@ -45,5 +56,7 @@
 <text x="408.0" y="305" fill="#334155">74 / 536</text>
 <rect x="570" y="290" width="91.6" height="20" rx="3" fill="#059669"/>
 <text x="667.6" y="305" fill="#334155">76%</text>
+<rect x="750" y="290" width="114.0" height="20" rx="3" fill="#d97706"/>
+<text x="870.0" y="305" fill="#334155">0.95</text>
 <text x="16" y="360" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
 </svg>
