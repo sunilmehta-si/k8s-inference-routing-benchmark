@@ -173,3 +173,10 @@ class ScorerResultsTests(_OneRunDataset, unittest.TestCase):
         for metric in ("TTFT p50", "TTFT p95", "TTFT p99"):
             self.assertIn((metric, "router-default", "prefix-load-aware"), self.found)
         self.assertIn(("Load balance", "load-aware", "router-default"), self.found)
+
+
+class ActiveWeightResultsTests(_OneRunDataset, unittest.TestCase):
+    """What does weighting the prefix, then the in-flight count, twice buy prefix-active?"""
+    DIR, REPORT_TITLE = "active-weights", "active-weights (chat-rag-mix)"
+    MODES_HERE = ("prefix-active", "prefix-active-p2", "prefix-active-a2")
+    TITLE = "prefix-active with the prefix, then the in-flight count, weighted twice: 4 simulated vLLM pods, 1,672 requests"
