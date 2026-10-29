@@ -194,3 +194,10 @@ class ActiveWeightResultsTests(_OneRunDataset, unittest.TestCase):
             self.assertIn((metric, "prefix-active", "prefix-active-a2"), self.found)
         self.assertIn(("Load balance", "prefix-active-a2", "prefix-active-p2"), self.found)
         self.assertNotIn("TTFT p50", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active", "prefix-active-p2"}})
+
+
+class HeadToHeadResultsTests(_OneRunDataset, unittest.TestCase):
+    """The two routers with the most cache hits in the same run, beside prefix-only and round-robin."""
+    DIR, REPORT_TITLE = "head-to-head", "head-to-head (chat-rag-mix)"
+    MODES_HERE = ("round-robin", "prefix-aware", "router-default", "prefix-active-p2")
+    TITLE = "The two routers with the most cache hits, next to prefix-only and round-robin: 4 simulated vLLM pods, 1,672 requests"

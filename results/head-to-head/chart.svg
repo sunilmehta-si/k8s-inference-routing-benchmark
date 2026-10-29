@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="286" viewBox="0 0 900 286" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">The two routers with the most cache hits, next to prefix-only and round-robin: 4 simulated vLLM pods, 1,672 requests</text>
+<text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
+<text x="570" y="50" fill="#475569">Prefix-cache hits</text>
+<text x="750" y="50" fill="#475569">Load balance</text>
+<text x="16" y="84" fill="#0f172a">round-robin</text>
+<rect x="150" y="70" width="284.1" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="70" width="46.2" height="20" rx="3" fill="#2563eb"/>
+<line x1="426.9" y1="80" x2="442.0" y2="80" stroke="#1e3a8a" stroke-width="2"/>
+<text x="448.0" y="85" fill="#334155">115 / 706</text>
+<rect x="570" y="70" width="77.1" height="20" rx="3" fill="#059669"/>
+<text x="653.1" y="85" fill="#334155">64%</text>
+<rect x="750" y="70" width="113.6" height="20" rx="3" fill="#d97706"/>
+<text x="869.6" y="85" fill="#334155">0.95</text>
+<text x="16" y="128" fill="#0f172a">prefix-aware</text>
+<rect x="150" y="114" width="345.2" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="114" width="37.9" height="20" rx="3" fill="#2563eb"/>
+<line x1="433.4" y1="124" x2="530.0" y2="124" stroke="#1e3a8a" stroke-width="2"/>
+<text x="536.0" y="129" fill="#334155">94 / 858</text>
+<rect x="570" y="114" width="94.8" height="20" rx="3" fill="#059669"/>
+<text x="670.8" y="129" fill="#334155">79%</text>
+<rect x="750" y="114" width="68.6" height="20" rx="3" fill="#d97706"/>
+<text x="824.6" y="129" fill="#334155">0.57</text>
+<text x="16" y="172" fill="#0f172a">router-default</text>
+<rect x="150" y="158" width="193.6" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="158" width="30.9" height="20" rx="3" fill="#2563eb"/>
+<line x1="331.9" y1="168" x2="358.4" y2="168" stroke="#1e3a8a" stroke-width="2"/>
+<text x="364.4" y="173" fill="#334155">77 / 481</text>
+<rect x="570" y="158" width="99.2" height="20" rx="3" fill="#059669"/>
+<text x="675.2" y="173" fill="#334155">83%</text>
+<rect x="750" y="158" width="86.3" height="20" rx="3" fill="#d97706"/>
+<text x="842.3" y="173" fill="#334155">0.72</text>
+<text x="16" y="216" fill="#0f172a">prefix-active-p2</text>
+<rect x="150" y="202" width="185.7" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="202" width="30.3" height="20" rx="3" fill="#2563eb"/>
+<line x1="326.7" y1="212" x2="410.4" y2="212" stroke="#1e3a8a" stroke-width="2"/>
+<text x="416.4" y="217" fill="#334155">75 / 462</text>
+<rect x="570" y="202" width="100.0" height="20" rx="3" fill="#059669"/>
+<text x="676.0" y="217" fill="#334155">83%</text>
+<rect x="750" y="202" width="99.9" height="20" rx="3" fill="#d97706"/>
+<text x="855.9" y="217" fill="#334155">0.83</text>
+<text x="16" y="272" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
+</svg>
