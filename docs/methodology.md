@@ -55,7 +55,7 @@ Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-infer
 
 `round-robin` is a ClusterIP Service. The others are the [llm-d Router](https://github.com/llm-d/llm-d-router)
 v1.0.0 in standalone mode: Envoy in the endpoint picker's pod, asking it over ext_proc where each request should go.
-The nine configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters
+The eleven configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters
 ([what each scorer reads and scores](scorers.md)):
 
 - `load-aware`: `load-aware-scorer`, from the pods' waiting queues (it does not read running counts).
@@ -70,6 +70,8 @@ The nine configurations in [`deploy/router/`](../deploy/router/) differ only in 
   `queue-scorer`, `running-requests-size-scorer` or `active-request-scorer`. Those three rescale their signal across
   the pods being compared, so the least loaded pod scores 1 and the most loaded 0, twice the gap `load-aware` can
   make. `prefix-active` counts the router's own requests in flight rather than scraped metrics.
+- `prefix-active-p2`, `prefix-active-a2`: `prefix-active` with the prefix, then the in-flight count, at weight 2.0.
+  `prefix-active` gave up four points of cache hits against `prefix-load-aware`; these ask what each weight buys.
 - `router-default`: the scoring the router chart installs by default (`queue-scorer` 2, `kv-cache-utilization-scorer`
   2, `prefix-cache-scorer` 3), on the same filter and picker as the rest. The CI chart job fails if the chart's
   default at the pinned commit stops matching it.
