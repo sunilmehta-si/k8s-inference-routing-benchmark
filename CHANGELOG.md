@@ -29,6 +29,10 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   and balance in every run, at four points less hit rate; `prefix-running` spread it most evenly; the chart's default
   kept the most cache hits.
 
+- Routers `prefix-active-p2` and `prefix-active-a2`: `prefix-active` with the prefix, then the in-flight count, at
+  weight 2.
+- The chart shows each router's load balance beside its prefix-cache hits.
+
 ### Fixed
 - The cluster report compared six routers named by hand; it now compares every router the run measured.
 - The README and methodology said `load-aware` reads queued and running work; it reads the waiting queue only.

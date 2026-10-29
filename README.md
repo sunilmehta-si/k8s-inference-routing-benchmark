@@ -3,7 +3,7 @@
 [![ci](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml) [![cluster](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml)
 
 **How much does the router in front of your LLM servers matter?** This project answers that with numbers. It replays
-the same chat and RAG traffic through ten ways of spreading requests over vLLM pods on Kubernetes and measures what
+the same chat and RAG traffic through twelve ways of spreading requests over vLLM pods on Kubernetes and measures what
 users feel (time to first token), what the cluster does (prefix-cache hits, load spread, throughput) and whether
 requests meet a latency objective. **No GPUs are needed**: the model servers are the
 [llm-d vLLM simulator](https://github.com/llm-d/llm-d-inference-sim), which models prefill, decode, load and a real
@@ -21,8 +21,10 @@ prefix cache over real token blocks.
 | `prefix-running` | The prefix and the requests each pod is running, weighted equally, rescaled the same way. |
 | `prefix-active` | The prefix and the requests the router itself has in flight to each pod, weighted equally. |
 | `router-default` | The router chart's own default: waiting queue 2, KV-cache utilization 2, prefix 3. |
+| `prefix-active-p2` | `prefix-active` with the prefix weighted 2. |
+| `prefix-active-a2` | `prefix-active` with the in-flight count weighted 2. |
 
-The last nine are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
+The last eleven are the [llm-d Router](https://github.com/llm-d/llm-d-router) v1.0.0 (Envoy plus the endpoint picker
 that implements the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension)'s
 `InferencePool`) with one scoring configuration changed between them. Everything else, the trace, the model servers,
 their latency profile and cache, is identical, and every router starts on its own cluster with empty caches.
@@ -52,7 +54,7 @@ CI ([run 1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/act
 [runs 6 to 8](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40309989360)). All 53,504 requests were answered and the load client never fell behind.
 [Full results](results/chat-rag-mix/README.md).
 
-![TTFT and prefix-cache hits per router, median of eight runs](results/chat-rag-mix/chart.svg)
+![TTFT, prefix-cache hits and load balance per router, median of eight runs](results/chat-rag-mix/chart.svg)
 
 Each cell is the median of the eight runs, with the lowest and highest in brackets.
 
