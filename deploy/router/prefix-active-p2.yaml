@@ -1,0 +1,25 @@
+# prefix-active-p2: prefix-active with the prefix weighted twice the router's in-flight count. prefix-active gave up
+# four points of cache hits against prefix-load-aware; this asks whether a heavier prefix wins them back without
+# bringing the pile-up with it.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: active-request-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 2.0
+          - pluginRef: active-request-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker

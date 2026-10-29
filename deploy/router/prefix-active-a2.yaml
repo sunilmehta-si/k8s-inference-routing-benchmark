@@ -1,0 +1,24 @@
+# prefix-active-a2: prefix-active with the router's in-flight count weighted twice the prefix. The opposite question:
+# does weighting load higher still spread the work any better, and what does it cost in cache hits?
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        - type: prefix-cache-scorer
+        - type: active-request-scorer
+        - type: max-score-picker
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: active-request-scorer
+            weight: 2.0
+          - pluginRef: max-score-picker

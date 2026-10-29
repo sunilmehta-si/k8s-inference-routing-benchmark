@@ -120,7 +120,9 @@ class RouterConfigTests(unittest.TestCase):
                                    "prefix-queue": ["prefix-cache-scorer", "queue-scorer"],
                                    "prefix-running": ["prefix-cache-scorer", "running-requests-size-scorer"],
                                    "prefix-active": ["active-request-scorer", "prefix-cache-scorer"],
-                                   "router-default": ["kv-cache-utilization-scorer", "prefix-cache-scorer", "queue-scorer"]})
+                                   "router-default": ["kv-cache-utilization-scorer", "prefix-cache-scorer", "queue-scorer"],
+                                   "prefix-active-p2": ["active-request-scorer", "prefix-cache-scorer"],
+                                   "prefix-active-a2": ["active-request-scorer", "prefix-cache-scorer"]})
 
     def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
         def config(mode):
@@ -153,6 +155,18 @@ class RouterConfigTests(unittest.TestCase):
         self.assertEqual(weights, {"decode-filter": None, "queue-scorer": 2.0, "kv-cache-utilization-scorer": 2.0,
                                    "prefix-cache-scorer": 3.0, "max-score-picker": None})
         self.assertIn("router-default scores like the chart's own default", (ROOT / ".github/workflows/ci.yml").read_text())
+
+    def test_prefix_active_variants_differ_from_prefix_active_only_in_one_weight(self):
+        def profile(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            config = yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+            return config["plugins"], {p["pluginRef"]: p.get("weight") for p in config["schedulingProfiles"][0]["plugins"]}
+        plugins, weights = profile("prefix-active")
+        for mode, heavier in (("prefix-active-p2", "prefix-cache-scorer"), ("prefix-active-a2", "active-request-scorer")):
+            with self.subTest(mode=mode):
+                v_plugins, v_weights = profile(mode)
+                self.assertEqual(v_plugins, plugins)
+                self.assertEqual(v_weights, {**weights, heavier: 2.0})
 
     def test_prefix_load_2x_differs_from_prefix_load_aware_only_in_the_load_weight(self):
         def profile(mode):
