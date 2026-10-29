@@ -65,6 +65,7 @@ class CliTests(unittest.TestCase):
         self.assertNotRegex(out.split("by kind of traffic")[1], r"\d\.\d")              # whole milliseconds
         code, _, _ = quiet(["chart", *map(str, runs), "--title", "tiny", "-o", str(self.d / "c.svg")])
         self.assertEqual(code, 0)
+        self.assertIn("Load balance", (self.d / "c.svg").read_text())              # the spread column, beside the hits
         self.assertTrue((self.d / "c.svg").read_text().startswith("<svg"))
 
     def test_results_from_different_traces_or_duplicate_routers_are_not_compared(self):
