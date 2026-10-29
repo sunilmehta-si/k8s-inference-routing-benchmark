@@ -32,8 +32,10 @@ their latency profile and cache, is identical, and every router starts on its ow
 **The short answer so far.** Prefix-aware routing finds the cache (pod hit rate 64% to 80%) but piles the work onto
 two of four pods, and the router's `load-aware` scorer did not undo that at any weight or threshold tried. Swapping it
 for the router's `active-request-scorer` did: in eight runs `prefix-active` beat prefix-plus-load on median, p95 and
-p99 time to first token and spread the work as evenly as load-aware routing, keeping 76% hits.
-[The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) has the numbers.
+p99 time to first token and spread the work as evenly as load-aware routing, keeping 76% hits. With the prefix at
+weight 2 it keeps 83%, the most of any router here, with the best p95.
+[The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) and
+[the weights](#what-does-each-weight-buy-prefix-active) have the numbers.
 
 ## Why prefix caching decides this
 
