@@ -4,6 +4,13 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-29
+
+The load scorer that spreads the work. Tuning the router's `load-aware` scorer never undid the pile-up prefix routing
+causes; swapping it for a scorer that rescales load across the pods did, and `prefix-active` with the prefix at
+weight 2 now holds the best p95 and the most cache hits of any router measured. Every claim is checked against the
+runs by a test, and `irb compare` shows which differences held in every run.
+
 ### Added
 - `irb compare`: per metric and pair of routers, in how many shared runs each was better; `--held` keeps only the
   differences that held in every run. Reports with repeated runs list those differences too, and a test checks every
