@@ -33,7 +33,7 @@ their latency profile and cache, is identical, and every router starts on its ow
 two of four pods, and the router's `load-aware` scorer did not undo that at any weight or threshold tried. Swapping it
 for the router's `active-request-scorer` did: in eight runs `prefix-active` beat prefix-plus-load on median, p95 and
 p99 time to first token and spread the work as evenly as load-aware routing, keeping 76% hits. With the prefix at
-weight 2 it keeps 83%, the most of any router here, with the best p95.
+weight 2 it keeps 83%, level with the router chart's own default, with the best p95.
 [The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) and
 [the weights](#what-does-each-weight-buy-prefix-active) have the numbers.
 
@@ -204,6 +204,31 @@ of each beside `prefix-active` in
   of eight and the higher goodput in six; the heavier prefix shows up in the tail, where a request that misses its
   cache waits longest.
 
+### The two best routers in the same run
+
+The scorer and weight comparisons came from different CI runs, so "most cache hits of any router" compared across
+runs. This run puts `prefix-active-p2` and `router-default` side by side, with prefix-only and round-robin for
+scale, eight times each
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40840160740), [full results](results/head-to-head/README.md)). Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| round-robin | 115 ms | 706 ms | 958 ms | 64.3% | **0.95** | 99.1% |
+| prefix-aware | 94 ms | 858 ms | 1,348 ms | 79.0% | 0.57 | 97.1% |
+| router-default | 77 ms | 481 ms | 803 ms | 82.7% | 0.72 | 99.5% |
+| prefix-active-p2 | **75 ms** | **462 ms** | **660 ms** | **83.3%** | 0.83 | **99.7%** |
+
+- **Between the two, nothing held on latency or hits.** `prefix-active-p2` had the better median and hit rate in
+  five runs of eight and the better p99 in seven; the medians above favour it, but by less than the runs vary. The
+  earlier "most hits of any router" is, in the same run, "about the same as the chart's default".
+- **The spread did hold its direction, mostly.** `prefix-active-p2` was more evenly loaded than `router-default` in
+  seven runs of eight (0.83 against 0.72), and than prefix-only in every run.
+- **Both beat prefix-only and round-robin where it matters.** Each had a lower median and more cache hits than both
+  in every run.
+- **One run of `prefix-active-p2` had a p99 of 3.3 s** against 650 to 720 ms in the other seven, and its goodput
+  fell to 96.7%. Nothing in the pods' counters singles that run out; it is in the dataset, and the range in the full
+  results shows it. Eight runs is enough to see a tail like that once and not enough to say how often it comes.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -274,6 +299,7 @@ make cluster MODE=prefix-load-aware
 | The load scorer's queue threshold at the pods' concurrency | Done: no change on its own, eight runs |
 | The router's three rescaled load scorers and its chart default, next to the prefix scorer | Done: they spread the work; `prefix-active` best overall, eight runs |
 | The prefix and in-flight weights around `prefix-active` | Done: prefix 2 gives the most hits and the best tail, eight runs |
+| `prefix-active-p2` and `router-default` in the same run | Done: not reliably different on latency or hits; p2 spreads the work better in seven of eight |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 

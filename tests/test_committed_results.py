@@ -201,3 +201,18 @@ class HeadToHeadResultsTests(_OneRunDataset, unittest.TestCase):
     DIR, REPORT_TITLE = "head-to-head", "head-to-head (chat-rag-mix)"
     MODES_HERE = ("round-robin", "prefix-aware", "router-default", "prefix-active-p2")
     TITLE = "The two routers with the most cache hits, next to prefix-only and round-robin: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_the_head_to_head(self):
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)
+                if {p.a, p.b} == {"router-default", "prefix-active-p2"}}
+        self.assertEqual({f[0] for f in self.found if {f[1], f[2]} == {"router-default", "prefix-active-p2"}}, set())
+        self.assertEqual((wins["TTFT p50"]["prefix-active-p2"], wins["Prefix-cache hit rate"]["prefix-active-p2"],
+                          wins["TTFT p99"]["prefix-active-p2"], wins["Load balance"]["prefix-active-p2"]), (5, 5, 7, 7))
+        for best in ("router-default", "prefix-active-p2"):
+            for other in ("prefix-aware", "round-robin"):
+                self.assertIn(("TTFT p50", best, other), self.found)
+                self.assertIn(("Prefix-cache hit rate", best, other), self.found)
+        self.assertIn(("Load balance", "prefix-active-p2", "prefix-aware"), self.found)
+        p99 = sorted(r["summary"]["ttft_ms"]["p99"] for r in self.runs if r["mode"] == "prefix-active-p2")
+        self.assertGreater(p99[-1], 3000)
+        self.assertLess(p99[-2], 750)
