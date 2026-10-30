@@ -134,8 +134,11 @@ spec:
           readinessProbe:
             httpGet: {path: /health, port: 8000}
             periodSeconds: 2
+          # A simulated pod does little work: a request of 100m lets eight of them, the render server and the router
+          # (about 2 CPUs together) fit beside kube-system on a 4-CPU runner. At 250m the router stayed Pending on
+          # an eight-pod cluster, and the run failed without measuring anything.
           resources:
-            requests: {cpu: 250m, memory: 256Mi}
+            requests: {cpu: 100m, memory: 256Mi}
             limits: {memory: 1Gi}
           volumeMounts: [{name: config, mountPath: /etc/sim, readOnly: true}]
           securityContext:

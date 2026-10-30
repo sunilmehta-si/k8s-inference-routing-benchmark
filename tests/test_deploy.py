@@ -62,6 +62,18 @@ class ModelServerTests(unittest.TestCase):
         self.assertIn("http://render.irb.svc:8082", args)
         self.assertEqual(sim["spec"]["template"]["metadata"]["labels"], {"app": "sim"})
 
+    def test_eight_pods_and_the_router_fit_a_four_cpu_runner(self):
+        # kube-system on a kind node asks for about a CPU; everything the benchmark adds must fit in the other three
+        def millicores(value):
+            return int(value[:-1]) if value.endswith("m") else int(float(value) * 1000)
+        docs = [d for d in yaml.safe_load_all((ROOT / "deploy/model-servers.yaml").read_text()) if d and d.get("kind") == "Deployment"]
+        requests = {d["metadata"]["name"]: millicores(d["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"]["cpu"])
+                    for d in docs}
+        router = yaml.safe_load((ROOT / "deploy/router/common.yaml").read_text())["router"]
+        epp = millicores(router["epp"]["resources"]["requests"]["cpu"])
+        proxy = millicores(router["proxy"]["resources"]["requests"]["cpu"])
+        self.assertLessEqual(requests["render"] + 8 * requests["sim"] + epp + proxy, 3000)
+
     def test_the_render_server_outlasts_the_simulators_idle_connections(self):
         render = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "render")
         env = {e["name"]: e["value"] for e in render["spec"]["template"]["spec"]["containers"][0]["env"]}
