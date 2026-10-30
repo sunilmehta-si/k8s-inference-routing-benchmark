@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FINGERPRINTS = {
     "smoke": "sha256:28c149d236ddb2b6f397456c47f7567c944f54d85bd181a0c0f5e0e13f1805f1",
     "chat-rag-mix": "sha256:bc470acc83d6afbed70a27d05517c9ff855f93e97f455fda2752a1db0fc1fada",
+    "one-off-heavy": "sha256:ff889bc8f7e009d9974469fc51e66dff82512c37f1d6170e6668c10e43d96c26",
 }
 
 
@@ -30,3 +31,10 @@ class ReproducibleTraceTests(unittest.TestCase):
         s = stats(generate(load_spec(ROOT / "workloads/chat-rag-mix.yaml")))
         self.assertEqual(s["requests"], 1672)                                  # docs/methodology.md
         self.assertEqual(s["shared_prefix_share"], 0.856)                      # README: 86% of prompt text
+
+    def test_the_control_workload_shares_a_fifth_of_the_prefix_text(self):
+        s = stats(generate(load_spec(ROOT / "workloads/one-off-heavy.yaml")))
+        self.assertGreater(s["requests"], 1300)
+        self.assertLess(s["shared_prefix_share"], 0.2)                     # against 0.86 for chat-rag-mix
+        self.assertGreater(s["by_kind"]["single"] / s["requests"], 0.9)    # almost all one-off prompts
+        self.assertNotIn("rag", s["by_kind"])

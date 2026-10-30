@@ -1,0 +1,21 @@
+# Five minutes of traffic in which almost nothing repeats: a batch job of one-off prompts carrying most of the load,
+# and one small support assistant whose chat turns are the only repeated text. About the same request rate as
+# chat-rag-mix, but a fifth of the shared prefix. This is the control: a router that scores prefixes has little to
+# find here, so any gain it still shows comes from somewhere else, and any cost it carries shows undiluted.
+name: one-off-heavy
+seed: 11
+duration_s: 300
+max_tokens: [32, 160]
+tenants:
+  - name: support
+    system_prompt_words: 300
+    chat:
+      sessions_per_minute: 4
+      turns: [2, 6]
+      think_time_s: 15
+      user_words: [15, 60]
+      reply_words: [60, 160]
+  - name: batch
+    single:
+      per_minute: 270
+      words: [400, 1500]
