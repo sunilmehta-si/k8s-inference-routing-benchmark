@@ -4,6 +4,14 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-30
+
+Three more datasets, 144 cluster runs, that place the earlier results: the prefix routers' pile-up grows with the
+pool while `prefix-active` stays even; on a control trace with nothing to cache, the routers that pair prefix
+scoring with a rescaled load scorer keep their whole latency advantage, so that advantage is the load scoring; and
+the two best routers were not reliably different in the same run. The workflow can now run any pool size, a push
+never cancels an experiment, and report titles name the pool.
+
 ### Added
 - `workloads/one-off-heavy`: a control trace of 1,472 requests, 94% of them one-off prompts, with 3% shared prefix
   against chat-rag-mix's 86%, pinned by fingerprint like the others.
