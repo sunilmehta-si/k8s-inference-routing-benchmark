@@ -240,6 +240,34 @@ scale, eight times each
   fell to 96.7%. Nothing in the pods' counters singles that run out; it is in the dataset, and the range in the full
   results shows it. Eight runs is enough to see a tail like that once and not enough to say how often it comes.
 
+### Does the pile-up grow with the pool?
+
+Yes. The same trace on eight pods instead of four, eight runs of each router
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41031613030), [full results](results/eight-pods/README.md)). Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| round-robin | 116 ms | 574 ms | 717 ms | 62.7% | 0.91 | **99.6%** |
+| load-aware | 123 ms | 592 ms | 719 ms | 62.4% | 0.90 | **99.6%** |
+| prefix-aware | 89 ms | 731 ms | 1,081 ms | 80.9% | 0.29 | 98.6% |
+| router-default | 78 ms | 423 ms | 839 ms | 82.9% | 0.36 | 99.5% |
+| prefix-active | **67 ms** | 475 ms | 588 ms | 74.6% | **0.93** | **99.6%** |
+| prefix-active-p2 | **67 ms** | **380 ms** | **517 ms** | **84.4%** | 0.60 | **99.6%** |
+
+- **More pods, worse pile-up.** Prefix-only routing spread its work at 0.29 against 0.57 on four pods, the chart's
+  default at 0.36 against 0.72, and `prefix-active-p2` at 0.60 against 0.83. Round-robin and load-aware beat all
+  three on balance in every run. A prefix scorer sends a document's questions to the pod that has it however many
+  pods there are, so the share of the pool that sits idle grows with the pool.
+- **`prefix-active` stayed even** at 0.93, more evenly loaded than every prefix router in every run and level with
+  round-robin and load-aware (neither beat it reliably). It beat both on median, p99 and cache hits in every run.
+- **`prefix-active-p2` had the best tail and the most hits**, 517 ms p99 and 84% against the 86% the trace allows,
+  beating `prefix-active` on both in every run, and paid for it with the spread. Between the two the median did not
+  separate (five runs of eight to p2).
+- **Load-aware routing lost its edge over round-robin.** On four pods it beat round-robin's p95 in every run; on
+  eight nothing held between them. With twice the pods, each one's queue is rarely long enough to steer by.
+- **Prefix-only routing had the worst tail of all**: round-robin beat it on p99 and goodput in every run, and it was
+  the only router under 99% goodput.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -314,7 +342,8 @@ make cluster MODE=prefix-load-aware
 | The router's three rescaled load scorers and its chart default, next to the prefix scorer | Done: they spread the work; `prefix-active` best overall, eight runs |
 | The prefix and in-flight weights around `prefix-active` | Done: prefix 2 gives the most hits and the best tail, eight runs |
 | `prefix-active-p2` and `router-default` in the same run | Done: not reliably different on latency or hits; p2 spreads the work better in seven of eight |
-| A control trace where almost nothing repeats (`one-off-heavy`), and the same trace on eight pods | Running |
+| The same trace on eight pods | Done: the pile-up grows with the pool; `prefix-active` stays even, eight runs |
+| A control trace where almost nothing repeats (`one-off-heavy`) | Running |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 

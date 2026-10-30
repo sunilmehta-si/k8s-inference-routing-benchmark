@@ -227,3 +227,24 @@ class EightPodResultsTests(_OneRunDataset, unittest.TestCase):
     DIR, REPORT_TITLE, PODS = "eight-pods", "eight-pods (chat-rag-mix)", 8
     MODES_HERE = ("round-robin", "load-aware", "prefix-aware", "router-default", "prefix-active", "prefix-active-p2")
     TITLE = "Eight simulated vLLM pods instead of four: chat-rag-mix, 1,672 requests"
+
+    def test_what_the_readme_says_about_eight_pods(self):
+        prefix_routers = ("prefix-aware", "router-default", "prefix-active-p2")
+        for even in ("round-robin", "load-aware"):
+            for piled in prefix_routers:
+                self.assertIn(("Load balance", even, piled), self.found)
+            for metric in ("TTFT p50", "TTFT p99", "Prefix-cache hit rate"):
+                self.assertIn((metric, "prefix-active", even), self.found)
+            self.assertNotIn("Load balance", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active", even}})
+        for piled in prefix_routers:
+            self.assertIn(("Load balance", "prefix-active", piled), self.found)
+        for metric in ("TTFT p99", "Prefix-cache hit rate"):
+            self.assertIn((metric, "prefix-active-p2", "prefix-active"), self.found)
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs) if {p.a, p.b} == {"prefix-active", "prefix-active-p2"}}
+        self.assertEqual(wins["TTFT p50"]["prefix-active-p2"], 5)
+        self.assertEqual({f[0] for f in self.found if {f[1], f[2]} == {"round-robin", "load-aware"}}, set())
+        for metric in ("TTFT p99", "Goodput"):
+            self.assertIn((metric, "round-robin", "prefix-aware"), self.found)
+        medians = {m: sorted(r["pods"]["balance"] for r in self.runs if r["mode"] == m)[3:5] for m in prefix_routers}
+        for m, (lo, hi) in medians.items():
+            self.assertLess((lo + hi) / 2, 0.61, m)                                # the pile-up numbers in the table
