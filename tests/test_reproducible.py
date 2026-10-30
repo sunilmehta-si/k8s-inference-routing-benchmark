@@ -34,7 +34,8 @@ class ReproducibleTraceTests(unittest.TestCase):
 
     def test_the_control_workload_shares_a_fifth_of_the_prefix_text(self):
         s = stats(generate(load_spec(ROOT / "workloads/one-off-heavy.yaml")))
-        self.assertGreater(s["requests"], 1300)
+        self.assertEqual(s["requests"], 1472)                              # the README's traces table
+        self.assertEqual(round(s["rate_per_s"], 1), 4.9)
         self.assertLess(s["shared_prefix_share"], 0.2)                     # against 0.86 for chat-rag-mix
         self.assertGreater(s["by_kind"]["single"] / s["requests"], 0.9)    # almost all one-off prompts
         self.assertNotIn("rag", s["by_kind"])

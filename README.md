@@ -37,6 +37,17 @@ weight 2 it keeps 83%, level with the router chart's own default, with the best 
 [The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) and
 [the weights](#what-does-each-weight-buy-prefix-active) have the numbers.
 
+## The traces
+
+| Trace | Requests | Rate | What repeats | Shared prefix |
+|---|---|---|---|---|
+| [`chat-rag-mix`](workloads/chat-rag-mix.yaml) | 1,672 | 5.6/s | system prompts, 40 documents, conversation history | 86% of prompt words |
+| [`one-off-heavy`](workloads/one-off-heavy.yaml) | 1,472 | 4.9/s | one small assistant's chat turns; 94% one-off prompts | 3% |
+
+Both are generated from a seed and pinned by fingerprint, so every run of every router replays the same requests.
+`one-off-heavy` is the control: a router that scores prefixes has almost nothing to find in it, so it shows what
+prefix scoring costs when it cannot help. The cluster workflow replays either at 2x (`SPEEDUP`).
+
 ## Why prefix caching decides this
 
 A vLLM server keeps the attention state (KV cache) of prompts it has processed. When a new prompt starts with text
