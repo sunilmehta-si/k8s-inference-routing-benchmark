@@ -5,6 +5,18 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Added
+- `workloads/one-off-heavy`: a control trace of 1,472 requests, 94% of them one-off prompts, with 3% shared prefix
+  against chat-rag-mix's 86%, pinned by fingerprint like the others.
+- The cluster workflow takes a `replicas` input, so the same trace can run on a larger pool of simulated pods, and
+  report titles name the pool size.
+
+### Fixed
+- A simulated pod requested 250m CPU; eight of them left the router Pending on a 4-CPU runner and the run failed
+  without measuring anything. They request 100m now, and a test holds the whole deployment to 3 CPUs.
+- A push cancelled a dispatched experiment in progress (48 jobs, 29 finished). Pushes and dispatches are separate
+  concurrency groups now, and only a push cancels a push.
+
+### Added
 - Eight runs of `prefix-active-p2` and `router-default` in the same CI run, with prefix-only and round-robin, in
   `results/head-to-head/`. Between the two nothing held on latency or hits; p2 spread the work better in seven runs
   of eight, and one of its runs had a p99 of 3.3 s.
