@@ -102,9 +102,12 @@ class _OneRunDataset:
                     self.assertTrue(r["summary"]["client"]["kept_up"])
                     self.assertEqual(r["pods"]["requests_served"], r["trace"]["requests"])
 
+    PODS = 4
+
     def test_report_and_chart_regenerate_exactly(self):
         self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, self.REPORT_TITLE))
-        self.assertIn(" on 4 simulated vLLM pods,", (self.dir / "README.md").read_text().splitlines()[0])
+        self.assertIn(f" on {self.PODS} simulated vLLM pods,", (self.dir / "README.md").read_text().splitlines()[0])
+        self.assertEqual({r["cluster"]["model_server"]["replicas"] for r in self.runs}, {self.PODS})
         self.assertEqual((self.dir / "chart.svg").read_text(), svg(self.runs, self.TITLE))
 
 
@@ -217,3 +220,10 @@ class HeadToHeadResultsTests(_OneRunDataset, unittest.TestCase):
         p99 = sorted(r["summary"]["ttft_ms"]["p99"] for r in self.runs if r["mode"] == "prefix-active-p2")
         self.assertGreater(p99[-1], 3000)
         self.assertLess(p99[-2], 750)
+
+
+class EightPodResultsTests(_OneRunDataset, unittest.TestCase):
+    """The same trace on eight pods instead of four: does the pile-up grow with the pool, and does spreading still pay?"""
+    DIR, REPORT_TITLE, PODS = "eight-pods", "eight-pods (chat-rag-mix)", 8
+    MODES_HERE = ("round-robin", "load-aware", "prefix-aware", "router-default", "prefix-active", "prefix-active-p2")
+    TITLE = "Eight simulated vLLM pods instead of four: chat-rag-mix, 1,672 requests"

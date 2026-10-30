@@ -1,0 +1,223 @@
+{
+  "by_kind": {
+    "chat": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 494.8,
+        "p95": 1683.4
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 1.0,
+      "ok": 227,
+      "requests": 227,
+      "server_cached_prompt_share": 0.7003,
+      "status_counts": {
+        "200": 227
+      },
+      "throughput": {
+        "output_tokens_per_s": 65.1,
+        "requests_per_s": 1.55
+      },
+      "tpot_ms": {
+        "p50": 13.4,
+        "p95": 15.0
+      },
+      "ttft_ms": {
+        "mean": 108.1,
+        "p50": 96.2,
+        "p90": 191.8,
+        "p95": 223.8,
+        "p99": 314.4
+      },
+      "ttft_slo_ms": 1000
+    },
+    "rag": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 529.3,
+        "p95": 1733.3
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.9983,
+      "ok": 1160,
+      "requests": 1160,
+      "server_cached_prompt_share": 0.845,
+      "status_counts": {
+        "200": 1160
+      },
+      "throughput": {
+        "output_tokens_per_s": 309.5,
+        "requests_per_s": 7.69
+      },
+      "tpot_ms": {
+        "p50": 13.4,
+        "p95": 15.4
+      },
+      "ttft_ms": {
+        "mean": 130.8,
+        "p50": 62.6,
+        "p90": 422.6,
+        "p95": 506.3,
+        "p99": 612.4
+      },
+      "ttft_slo_ms": 1000
+    },
+    "single": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 682.7,
+        "p95": 1901.7
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 1.0,
+      "ok": 285,
+      "requests": 285,
+      "server_cached_prompt_share": 0.0163,
+      "status_counts": {
+        "200": 285
+      },
+      "throughput": {
+        "output_tokens_per_s": 76.8,
+        "requests_per_s": 1.9
+      },
+      "tpot_ms": {
+        "p50": 13.3,
+        "p95": 15.0
+      },
+      "ttft_ms": {
+        "mean": 299.4,
+        "p50": 291.3,
+        "p90": 415.6,
+        "p95": 450.4,
+        "p99": 491.7
+      },
+      "ttft_slo_ms": 1000
+    }
+  },
+  "cluster": {
+    "kind_node_image": "kindest/node:v1.37.0",
+    "model_server": {
+      "config": {
+        "block-size": 16,
+        "enable-kvcache": true,
+        "engine": "vllm",
+        "hash-seed": "42",
+        "inter-token-latency": "12ms",
+        "inter-token-latency-std-dev": "2ms",
+        "kv-cache-size": 2048,
+        "latency-calculator": "per-token",
+        "max-model-len": 8192,
+        "max-num-seqs": 8,
+        "mode": "random",
+        "port": 8000,
+        "prefill-overhead": "30ms",
+        "prefill-time-per-token": "250us",
+        "prefill-time-std-dev": "5ms",
+        "time-factor-under-load": 2.0
+      },
+      "image": "ghcr.io/llm-d/llm-d-inference-sim:v1.0.0",
+      "replicas": 8,
+      "tokenizer": "Qwen/Qwen2.5-1.5B-Instruct"
+    },
+    "router": "v1.0.0"
+  },
+  "description": "llm-d Router v1.0.0, standalone Envoy + endpoint picker, scoring: prefix-active: weigh the cached prefix and the requests the router itself has in flight to each pod equally.",
+  "finished_at": "2026-10-30T09:31:13Z",
+  "mode": "prefix-active",
+  "pods": {
+    "balance": 0.901,
+    "per_pod": {
+      "sim-6747bb5bcb-22j4t": {
+        "prefix_cache_hit_rate": 0.7463,
+        "requests": 188
+      },
+      "sim-6747bb5bcb-d8q47": {
+        "prefix_cache_hit_rate": 0.7629,
+        "requests": 195
+      },
+      "sim-6747bb5bcb-fnd4b": {
+        "prefix_cache_hit_rate": 0.7354,
+        "requests": 199
+      },
+      "sim-6747bb5bcb-khj2c": {
+        "prefix_cache_hit_rate": 0.764,
+        "requests": 217
+      },
+      "sim-6747bb5bcb-ktt4n": {
+        "prefix_cache_hit_rate": 0.7856,
+        "requests": 209
+      },
+      "sim-6747bb5bcb-ngnfc": {
+        "prefix_cache_hit_rate": 0.741,
+        "requests": 213
+      },
+      "sim-6747bb5bcb-pgq7v": {
+        "prefix_cache_hit_rate": 0.7359,
+        "requests": 232
+      },
+      "sim-6747bb5bcb-rf69c": {
+        "prefix_cache_hit_rate": 0.7472,
+        "requests": 219
+      }
+    },
+    "pods": 8,
+    "prefix_cache_hit_rate": 0.7521,
+    "requests_served": 1672
+  },
+  "repeat": 4,
+  "run_url": "https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41031613030",
+  "schema": 1,
+  "summary": {
+    "client": {
+      "kept_up": true,
+      "lateness_p95_ms": 0.0
+    },
+    "e2e_ms": {
+      "p50": 549.8,
+      "p95": 1782.1
+    },
+    "error_rate": 0.0,
+    "errors": 0,
+    "goodput": 0.9988,
+    "ok": 1672,
+    "requests": 1672,
+    "server_cached_prompt_share": 0.7521,
+    "status_counts": {
+      "200": 1672
+    },
+    "throughput": {
+      "output_tokens_per_s": 448.9,
+      "requests_per_s": 11.08
+    },
+    "tpot_ms": {
+      "p50": 13.4,
+      "p95": 15.3
+    },
+    "ttft_ms": {
+      "mean": 156.5,
+      "p50": 67.7,
+      "p90": 404.0,
+      "p95": 472.5,
+      "p99": 596.2
+    },
+    "ttft_slo_ms": 1000
+  },
+  "tool_version": "0.2.0",
+  "trace": {
+    "fingerprint": "sha256:bc470acc83d6afbed70a27d05517c9ff855f93e97f455fda2752a1db0fc1fada",
+    "name": "chat-rag-mix",
+    "requests": 1672
+  }
+}

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="374" viewBox="0 0 900 374" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">Eight simulated vLLM pods instead of four: chat-rag-mix, 1,672 requests</text>
+<text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
+<text x="570" y="50" fill="#475569">Prefix-cache hits</text>
+<text x="750" y="50" fill="#475569">Load balance</text>
+<text x="16" y="84" fill="#0f172a">round-robin</text>
+<rect x="150" y="70" width="249.7" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="70" width="50.5" height="20" rx="3" fill="#2563eb"/>
+<line x1="392.1" y1="80" x2="408.5" y2="80" stroke="#1e3a8a" stroke-width="2"/>
+<text x="414.5" y="85" fill="#334155">116 / 574</text>
+<rect x="570" y="70" width="75.2" height="20" rx="3" fill="#059669"/>
+<text x="651.2" y="85" fill="#334155">63%</text>
+<rect x="750" y="70" width="109.3" height="20" rx="3" fill="#d97706"/>
+<text x="865.3" y="85" fill="#334155">0.91</text>
+<text x="16" y="128" fill="#0f172a">load-aware</text>
+<rect x="150" y="114" width="257.2" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="114" width="53.5" height="20" rx="3" fill="#2563eb"/>
+<line x1="398.7" y1="124" x2="410.3" y2="124" stroke="#1e3a8a" stroke-width="2"/>
+<text x="416.3" y="129" fill="#334155">123 / 592</text>
+<rect x="570" y="114" width="74.9" height="20" rx="3" fill="#059669"/>
+<text x="650.9" y="129" fill="#334155">62%</text>
+<rect x="750" y="114" width="108.1" height="20" rx="3" fill="#d97706"/>
+<text x="864.1" y="129" fill="#334155">0.90</text>
+<text x="16" y="172" fill="#0f172a">prefix-aware</text>
+<rect x="150" y="158" width="317.7" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="158" width="38.6" height="20" rx="3" fill="#2563eb"/>
+<line x1="415.4" y1="168" x2="530.0" y2="168" stroke="#1e3a8a" stroke-width="2"/>
+<text x="536.0" y="173" fill="#334155">89 / 731</text>
+<rect x="570" y="158" width="97.1" height="20" rx="3" fill="#059669"/>
+<text x="673.1" y="173" fill="#334155">81%</text>
+<rect x="750" y="158" width="34.7" height="20" rx="3" fill="#d97706"/>
+<text x="790.7" y="173" fill="#334155">0.29</text>
+<text x="16" y="216" fill="#0f172a">router-default</text>
+<rect x="150" y="202" width="183.8" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="202" width="34.1" height="20" rx="3" fill="#2563eb"/>
+<line x1="320.1" y1="212" x2="353.3" y2="212" stroke="#1e3a8a" stroke-width="2"/>
+<text x="359.3" y="217" fill="#334155">78 / 423</text>
+<rect x="570" y="202" width="99.5" height="20" rx="3" fill="#059669"/>
+<text x="675.5" y="217" fill="#334155">83%</text>
+<rect x="750" y="202" width="43.7" height="20" rx="3" fill="#d97706"/>
+<text x="799.7" y="217" fill="#334155">0.36</text>
+<text x="16" y="260" fill="#0f172a">prefix-active</text>
+<rect x="150" y="246" width="206.3" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="246" width="29.1" height="20" rx="3" fill="#2563eb"/>
+<line x1="348.7" y1="256" x2="367.2" y2="256" stroke="#1e3a8a" stroke-width="2"/>
+<text x="373.2" y="261" fill="#334155">67 / 475</text>
+<rect x="570" y="246" width="89.5" height="20" rx="3" fill="#059669"/>
+<text x="665.5" y="261" fill="#334155">75%</text>
+<rect x="750" y="246" width="111.7" height="20" rx="3" fill="#d97706"/>
+<text x="867.7" y="261" fill="#334155">0.93</text>
+<text x="16" y="304" fill="#0f172a">prefix-active-p2</text>
+<rect x="150" y="290" width="165.4" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="290" width="29.3" height="20" rx="3" fill="#2563eb"/>
+<line x1="313.4" y1="300" x2="319.0" y2="300" stroke="#1e3a8a" stroke-width="2"/>
+<text x="325.0" y="305" fill="#334155">67 / 380</text>
+<rect x="570" y="290" width="101.3" height="20" rx="3" fill="#059669"/>
+<text x="677.3" y="305" fill="#334155">84%</text>
+<rect x="750" y="290" width="71.4" height="20" rx="3" fill="#d97706"/>
+<text x="827.4" y="305" fill="#334155">0.59</text>
+<text x="16" y="360" fill="#64748b">chat-rag-mix, 1,672 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
+</svg>
