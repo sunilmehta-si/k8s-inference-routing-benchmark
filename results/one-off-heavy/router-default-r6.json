@@ -1,0 +1,172 @@
+{
+  "by_kind": {
+    "chat": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 786.0,
+        "p95": 1916.1
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 1.0,
+      "ok": 86,
+      "requests": 86,
+      "server_cached_prompt_share": 0.707,
+      "status_counts": {
+        "200": 86
+      },
+      "throughput": {
+        "output_tokens_per_s": 26.1,
+        "requests_per_s": 0.59
+      },
+      "tpot_ms": {
+        "p50": 16.9,
+        "p95": 21.0
+      },
+      "ttft_ms": {
+        "mean": 116.2,
+        "p50": 93.5,
+        "p90": 190.3,
+        "p95": 270.8,
+        "p99": 349.5
+      },
+      "ttft_slo_ms": 1000
+    },
+    "single": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 807.7,
+        "p95": 2122.6
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.9971,
+      "ok": 1386,
+      "requests": 1386,
+      "server_cached_prompt_share": 0.0162,
+      "status_counts": {
+        "200": 1386
+      },
+      "throughput": {
+        "output_tokens_per_s": 351.1,
+        "requests_per_s": 9.15
+      },
+      "tpot_ms": {
+        "p50": 15.5,
+        "p95": 19.7
+      },
+      "ttft_ms": {
+        "mean": 360.6,
+        "p50": 351.4,
+        "p90": 514.4,
+        "p95": 551.5,
+        "p99": 677.8
+      },
+      "ttft_slo_ms": 1000
+    }
+  },
+  "cluster": {
+    "kind_node_image": "kindest/node:v1.37.0",
+    "model_server": {
+      "config": {
+        "block-size": 16,
+        "enable-kvcache": true,
+        "engine": "vllm",
+        "hash-seed": "42",
+        "inter-token-latency": "12ms",
+        "inter-token-latency-std-dev": "2ms",
+        "kv-cache-size": 2048,
+        "latency-calculator": "per-token",
+        "max-model-len": 8192,
+        "max-num-seqs": 8,
+        "mode": "random",
+        "port": 8000,
+        "prefill-overhead": "30ms",
+        "prefill-time-per-token": "250us",
+        "prefill-time-std-dev": "5ms",
+        "time-factor-under-load": 2.0
+      },
+      "image": "ghcr.io/llm-d/llm-d-inference-sim:v1.0.0",
+      "replicas": 4,
+      "tokenizer": "Qwen/Qwen2.5-1.5B-Instruct"
+    },
+    "router": "v1.0.0"
+  },
+  "description": "llm-d Router v1.0.0, standalone Envoy + endpoint picker, scoring: router-default: the llm-d Router chart's own default scoring, queue 2, KV-cache utilization 2 and cached prefix 3.",
+  "finished_at": "2026-10-30T09:47:40Z",
+  "mode": "router-default",
+  "pods": {
+    "balance": 0.893,
+    "per_pod": {
+      "sim-6747bb5bcb-brk6m": {
+        "prefix_cache_hit_rate": 0.0162,
+        "requests": 357
+      },
+      "sim-6747bb5bcb-fr44t": {
+        "prefix_cache_hit_rate": 0.0163,
+        "requests": 363
+      },
+      "sim-6747bb5bcb-gmg4v": {
+        "prefix_cache_hit_rate": 0.1177,
+        "requests": 412
+      },
+      "sim-6747bb5bcb-nzh9h": {
+        "prefix_cache_hit_rate": 0.0162,
+        "requests": 340
+      }
+    },
+    "pods": 4,
+    "prefix_cache_hit_rate": 0.0429,
+    "requests_served": 1472
+  },
+  "repeat": 6,
+  "run_url": "https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41032326274",
+  "schema": 1,
+  "summary": {
+    "client": {
+      "kept_up": true,
+      "lateness_p95_ms": 0.0
+    },
+    "e2e_ms": {
+      "p50": 803.9,
+      "p95": 2121.4
+    },
+    "error_rate": 0.0,
+    "errors": 0,
+    "goodput": 0.9973,
+    "ok": 1472,
+    "requests": 1472,
+    "server_cached_prompt_share": 0.0429,
+    "status_counts": {
+      "200": 1472
+    },
+    "throughput": {
+      "output_tokens_per_s": 376.3,
+      "requests_per_s": 9.72
+    },
+    "tpot_ms": {
+      "p50": 15.6,
+      "p95": 19.9
+    },
+    "ttft_ms": {
+      "mean": 346.3,
+      "p50": 339.9,
+      "p90": 510.3,
+      "p95": 549.0,
+      "p99": 662.0
+    },
+    "ttft_slo_ms": 1000
+  },
+  "tool_version": "0.2.0",
+  "trace": {
+    "fingerprint": "sha256:ff889bc8f7e009d9974469fc51e66dff82512c37f1d6170e6668c10e43d96c26",
+    "name": "one-off-heavy",
+    "requests": 1472
+  }
+}

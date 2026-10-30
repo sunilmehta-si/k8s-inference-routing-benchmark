@@ -88,9 +88,11 @@ class _OneRunDataset:
         self.runs = [load(p) for m in self.MODES_HERE for p in sorted(self.dir.glob(f"{m}-r*.json"))]
         self.found = {(p.metric, p.winner, ({p.a, p.b} - {p.winner}).pop()) for p in held(self.runs)}
 
+    TRACE = "chat-rag-mix"
+
     def test_one_clean_ci_run_with_eight_repeats_of_every_router(self):
         comparable(self.runs)
-        self.assertEqual({r["trace"]["fingerprint"] for r in self.runs}, {FINGERPRINTS["chat-rag-mix"]})
+        self.assertEqual({r["trace"]["fingerprint"] for r in self.runs}, {FINGERPRINTS[self.TRACE]})
         self.assertEqual(len({r["run_url"] for r in self.runs}), 1)
         groups = dict(by_mode(self.runs))
         self.assertEqual(tuple(groups), self.MODES_HERE)
@@ -248,3 +250,10 @@ class EightPodResultsTests(_OneRunDataset, unittest.TestCase):
         medians = {m: sorted(r["pods"]["balance"] for r in self.runs if r["mode"] == m)[3:5] for m in prefix_routers}
         for m, (lo, hi) in medians.items():
             self.assertLess((lo + hi) / 2, 0.61, m)                                # the pile-up numbers in the table
+
+
+class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
+    """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
+    DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
+    MODES_HERE = ("round-robin", "load-aware", "prefix-aware", "router-default", "prefix-active", "prefix-active-p2")
+    TITLE = "one-off-heavy, the control: 4 simulated vLLM pods, 1,472 requests that mostly share nothing"
