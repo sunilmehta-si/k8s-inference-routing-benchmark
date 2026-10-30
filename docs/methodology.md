@@ -29,6 +29,14 @@ Prompt text comes from a fixed vocabulary of common English words that the Qwen 
 token each, so words are close to tokens. Arrivals are Poisson. The cluster workflow replays the trace at 2x
 (`SPEEDUP`), about 11 requests a second, so the pods run at a load where routing decisions show.
 
+### The control: one-off-heavy
+
+[`workloads/one-off-heavy.yaml`](../workloads/one-off-heavy.yaml): the same five minutes and about the same rate
+(1,472 requests), but 94% of them one-off batch prompts and the rest one small support assistant's chat turns. Only
+3% of its prompt words were sent before, against 86% in chat-rag-mix. A router that scores prefixes has almost
+nothing to find, so this trace shows what prefix scoring costs when it cannot help, and whether the load scorers'
+gains on chat-rag-mix came from the cache or from the spread.
+
 ### Shared prefix, exactly
 
 Each prompt is a chain of segments: system prompt, document, then messages in order. A request's
