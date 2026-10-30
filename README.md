@@ -269,6 +269,32 @@ Yes. The same trace on eight pods instead of four, eight runs of each router
 - **Prefix-only routing had the worst tail of all**: round-robin beat it on p99 and goodput in every run, and it was
   the only router under 99% goodput.
 
+### The control: what survives when nothing repeats
+
+`one-off-heavy` has 3% shared prefix, so every router's cache hit rate sits at 3 to 4%. Eight runs of six routers
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41032326274), [full results](results/one-off-heavy/README.md)). Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance |
+|---|---|---|---|---|---|
+| round-robin | 366 ms | 646 ms | 894 ms | 3.4% | 0.93 |
+| load-aware | 364 ms | 614 ms | 766 ms | 3.4% | 0.96 |
+| prefix-aware | 366 ms | 624 ms | 779 ms | 4.2% | 0.85 |
+| router-default | 345 ms | 565 ms | 695 ms | 4.2% | 0.92 |
+| prefix-active | 342 ms | **542 ms** | 636 ms | 4.0% | **0.96** |
+| prefix-active-p2 | **340 ms** | **542 ms** | **610 ms** | 4.2% | 0.92 |
+
+- **The three routers that beat prefix-plus-load on chat-rag-mix still win here, with no cache to find.** The chart's
+  default, `prefix-active` and `prefix-active-p2` each beat round-robin and load-aware on median and p95 in every
+  run, and on p99 in every run but one (the default against load-aware, seven of eight): 6 to 7% off the median
+  and about 25% off the p99. The gain is the load scoring, not the cache: with
+  one-off prompts of 400 to 1,500 words, which pod is a little less busy decides the wait.
+- **The queue-based load scorer beat round-robin only in the tail** (p95 and p99 in every run, the median in five
+  of eight), and the three rescaled routers beat it everywhere.
+- **Prefix scoring alone costs spread, not time.** Prefix-only routing was less evenly loaded than round-robin and
+  load-aware in every run (0.85) but no slower than either in any way that held: with nothing to find, the prefix
+  scorer's ties fall to the picker's rotation, which is round-robin.
+- **Goodput told nothing.** Every router kept 99.3 to 99.7% of requests under a second, and no difference held.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -344,7 +370,7 @@ make cluster MODE=prefix-load-aware
 | The prefix and in-flight weights around `prefix-active` | Done: prefix 2 gives the most hits and the best tail, eight runs |
 | `prefix-active-p2` and `router-default` in the same run | Done: not reliably different on latency or hits; p2 spreads the work better in seven of eight |
 | The same trace on eight pods | Done: the pile-up grows with the pool; `prefix-active` stays even, eight runs |
-| A control trace where almost nothing repeats (`one-off-heavy`) | Running |
+| A control trace where almost nothing repeats (`one-off-heavy`) | Done: the rescaled routers still beat round-robin and load-aware on every latency, eight runs |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 

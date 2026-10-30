@@ -257,3 +257,23 @@ class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
     MODES_HERE = ("round-robin", "load-aware", "prefix-aware", "router-default", "prefix-active", "prefix-active-p2")
     TITLE = "one-off-heavy, the control: 4 simulated vLLM pods, 1,472 requests that mostly share nothing"
+
+    def test_what_the_readme_says_about_the_control(self):
+        for r in self.runs:
+            self.assertLess(r["pods"]["prefix_cache_hit_rate"], 0.05)              # 3 to 4%: nothing to find
+        for winner in ("router-default", "prefix-active", "prefix-active-p2"):
+            for base in ("round-robin", "load-aware"):
+                for metric in ("TTFT p50", "TTFT p95"):
+                    self.assertIn((metric, winner, base), self.found)
+                if (winner, base) != ("router-default", "load-aware"):
+                    self.assertIn(("TTFT p99", winner, base), self.found)
+        p99 = {p.a: p.a_better, p.b: p.b_better} if (p := next(p for p in pairs(self.runs) if p.metric == "TTFT p99" and {p.a, p.b} == {"router-default", "load-aware"})) else {}
+        self.assertEqual(p99["router-default"], 7)                                   # "seven of eight"
+        for metric in ("TTFT p95", "TTFT p99"):
+            self.assertIn((metric, "load-aware", "round-robin"), self.found)
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs) if {p.a, p.b} == {"round-robin", "load-aware"}}
+        self.assertEqual(wins["TTFT p50"]["load-aware"], 5)
+        for even in ("round-robin", "load-aware"):
+            self.assertIn(("Load balance", even, "prefix-aware"), self.found)
+            self.assertEqual({f[0] for f in self.found if {f[1], f[2]} == {even, "prefix-aware"}} - {"Load balance", "Prefix-cache hit rate"}, set())
+        self.assertEqual({f for f in self.found if f[0] == "Goodput"}, set())
