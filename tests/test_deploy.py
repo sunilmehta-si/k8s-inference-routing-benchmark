@@ -231,6 +231,8 @@ class WorkflowTests(unittest.TestCase):
         run = flow["jobs"]["run"]
         self.assertIn("[1, 2, 3]", run["strategy"]["matrix"]["repeat"])
         self.assertIn("github.event_name == 'push' && '[1]'", run["strategy"]["matrix"]["repeat"])   # a push runs each router once
+        for name, job in flow["jobs"].items():
+            self.assertNotIn("latest", str(job["runs-on"]), name)                          # the runner is pinned too
         routers = {p.stem for p in (ROOT / "deploy/router").glob("*.yaml")} - {"common"}
         default_modes = set(json.loads(flow[True]["workflow_dispatch"]["inputs"]["modes"]["default"]))
         self.assertEqual(default_modes, routers | {"round-robin"})                       # every router config runs

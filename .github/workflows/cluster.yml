@@ -42,9 +42,11 @@ concurrency:
   group: cluster-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
+# The runner is pinned like the router, the simulator and kind: ubuntu-latest moved to Ubuntu 26.04 on 2026-10-29 and
+# broke a sibling project's cluster runs. A runner bump is a pull request of its own, with a cluster run to show for it.
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -108,7 +110,7 @@ jobs:
 
   report:
     needs: run
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
