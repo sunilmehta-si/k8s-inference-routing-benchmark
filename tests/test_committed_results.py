@@ -104,6 +104,7 @@ class _OneRunDataset:
 
     def test_report_and_chart_regenerate_exactly(self):
         self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, self.REPORT_TITLE))
+        self.assertIn(" on 4 simulated vLLM pods,", (self.dir / "README.md").read_text().splitlines()[0])
         self.assertEqual((self.dir / "chart.svg").read_text(), svg(self.runs, self.TITLE))
 
 

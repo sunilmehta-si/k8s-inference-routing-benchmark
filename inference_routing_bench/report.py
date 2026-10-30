@@ -67,7 +67,9 @@ def markdown(runs: list[dict], title: str | None = None) -> str:
     first = runs[0]
     summary = first["summary"]
     repeats = sorted({len(rs) for _, rs in groups})
-    lines = [f"## {title or first['trace']['name']}: {first['trace']['requests']:,} requests, TTFT objective {summary['ttft_slo_ms']:,} ms", ""]
+    pods = {(r.get("cluster") or {}).get("model_server", {}).get("replicas") for r in runs} - {None}
+    where = f" on {pods.pop()} simulated vLLM pods" if len(pods) == 1 else ""
+    lines = [f"## {title or first['trace']['name']}: {first['trace']['requests']:,} requests{where}, TTFT objective {summary['ttft_slo_ms']:,} ms", ""]
     if repeats != [1]:
         lines += [f"Each cell is the median of {'/'.join(map(str, repeats))} runs per router, with the range in brackets; "
                   "every run had its own cluster and fresh model servers.", ""]

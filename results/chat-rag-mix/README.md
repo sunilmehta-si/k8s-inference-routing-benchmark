@@ -1,4 +1,4 @@
-## chat-rag-mix: 1,672 requests, TTFT objective 1,000 ms
+## chat-rag-mix: 1,672 requests on 4 simulated vLLM pods, TTFT objective 1,000 ms
 
 Each cell is the median of 8 runs per router, with the range in brackets; every run had its own cluster and fresh model servers.
 
