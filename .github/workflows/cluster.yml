@@ -36,9 +36,11 @@ defaults:
 permissions:
   contents: read
 
+# A newer push replaces the push run in progress, but a dispatched experiment is never cancelled by a push: the two
+# are different groups. (A push during a dispatch cancelled 48 jobs once, 29 of them finished.)
 concurrency:
-  group: cluster-${{ github.ref }}
-  cancel-in-progress: true
+  group: cluster-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
   run:

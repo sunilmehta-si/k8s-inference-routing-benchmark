@@ -258,6 +258,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('jq -r \'.[]\' <<<"$MODES"', compare["run"])
         # pyyaml reads the key `on` as True; docs and results pushes must not cancel a run that takes most of an hour
         self.assertEqual(flow[True]["push"]["paths-ignore"], ["**.md", "docs/**", "results/**"])
+        # and a push must never cancel a dispatched experiment: the two are different concurrency groups
+        self.assertIn("${{ github.event_name }}", flow["concurrency"]["group"])
+        self.assertEqual(flow["concurrency"]["cancel-in-progress"], "${{ github.event_name != 'workflow_dispatch' }}")
 
     def test_workflows_run_bash_with_pipefail_and_read_only_tokens(self):
         flows = sorted((ROOT / ".github/workflows").glob("*.yml"))
