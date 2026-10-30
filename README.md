@@ -244,7 +244,11 @@ scale, eight times each
 ### Does the pile-up grow with the pool?
 
 Yes. The same trace on eight pods instead of four, eight runs of each router
-([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41031613030), [full results](results/eight-pods/README.md)). Medians:
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41031613030), [full results](results/eight-pods/README.md)).
+
+![TTFT, prefix-cache hits and load balance per router on eight pods](results/eight-pods/chart.svg)
+
+Medians:
 
 | Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
 |---|---|---|---|---|---|---|
@@ -272,7 +276,11 @@ Yes. The same trace on eight pods instead of four, eight runs of each router
 ### The control: what survives when nothing repeats
 
 `one-off-heavy` has 3% shared prefix, so every router's cache hit rate sits at 3 to 4%. Eight runs of six routers
-([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41032326274), [full results](results/one-off-heavy/README.md)). Medians:
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41032326274), [full results](results/one-off-heavy/README.md)).
+
+![TTFT, prefix-cache hits and load balance per router on the control trace](results/one-off-heavy/chart.svg)
+
+Medians:
 
 | Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance |
 |---|---|---|---|---|---|
