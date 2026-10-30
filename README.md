@@ -33,9 +33,10 @@ their latency profile and cache, is identical, and every router starts on its ow
 two of four pods, and the router's `load-aware` scorer did not undo that at any weight or threshold tried. Swapping it
 for the router's `active-request-scorer` did: in eight runs `prefix-active` beat prefix-plus-load on median, p95 and
 p99 time to first token and spread the work as evenly as load-aware routing, keeping 76% hits. With the prefix at
-weight 2 it keeps 83%, level with the router chart's own default, with the best p95.
-[The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work) and
-[the weights](#what-does-each-weight-buy-prefix-active) have the numbers.
+weight 2 it keeps 83%, level with the router chart's own default, with the best p95. On eight pods the prefix
+routers' pile-up doubles while `prefix-active` stays even and still has the best median and tail.
+[The scorer comparison](#do-the-routers-other-load-scorers-spread-the-work), [the weights](#what-does-each-weight-buy-prefix-active)
+and [eight pods](#does-the-pile-up-grow-with-the-pool) have the numbers.
 
 ## The traces
 
