@@ -13,6 +13,11 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   (prefix-only at 0.29 balance, the chart's default at 0.36), `prefix-active` stays even at 0.93 while beating
   round-robin and load-aware on median, p99 and hits in every run, and load-aware's edge over round-robin is gone.
 
+- Eight runs of six routers on `one-off-heavy` in `results/one-off-heavy/`. With cache hits at 3 to 4% for every
+  router, the chart's default, `prefix-active` and `prefix-active-p2` still beat round-robin and load-aware on
+  median and p95 in every run and on p99 in all but one: their gain is the load scoring, not the cache. Prefix
+  scoring alone cost spread, not time.
+
 ### Fixed
 - A simulated pod requested 250m CPU; eight of them left the router Pending on a 4-CPU runner and the run failed
   without measuring anything. They request 100m now, and a test holds the whole deployment to 3 CPUs.

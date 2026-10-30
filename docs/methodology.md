@@ -37,6 +37,10 @@ token each, so words are close to tokens. Arrivals are Poisson. The cluster work
 nothing to find, so this trace shows what prefix scoring costs when it cannot help, and whether the load scorers'
 gains on chat-rag-mix came from the cache or from the spread.
 
+[Its results](../results/one-off-heavy/README.md): the routers that pair the prefix scorer with a rescaled load
+scorer kept their whole latency advantage over round-robin and load-aware with hits at 3 to 4%, so that advantage is
+the load scoring; prefix scoring alone was less evenly loaded than round-robin in every run and no slower.
+
 ### Shared prefix, exactly
 
 Each prompt is a chain of segments: system prompt, document, then messages in order. A request's
