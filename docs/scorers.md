@@ -71,3 +71,11 @@ different on latency or hits: both keep about 83% of the prompts' blocks cached.
 near-tie. The chart's default adds two scraped signals at weight 2 each, so its tie-breaks see the pods as they were
 at the last scrape; `prefix-active-p2` adds the router's own count, which changes with every request it sends, and
 spread the work better in seven runs of eight.
+
+## Eight pods
+
+[The same trace on eight pods](../results/eight-pods/README.md) made the mechanism plainer. A prefix scorer's choice
+does not depend on how many pods there are: the pod holding the document wins, so doubling the pool doubled the
+idle share and the prefix routers' balance fell to 0.29, 0.36 and 0.60. A rescaled load scorer's choice does depend
+on the pool: the busiest pod scores 0 against seven others at 1, so `prefix-active` stayed at 0.93. The queue-based
+load-aware scorer lost its edge over round-robin because eight pods' queues are rarely long enough to differ.

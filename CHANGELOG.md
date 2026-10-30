@@ -9,6 +9,9 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   against chat-rag-mix's 86%, pinned by fingerprint like the others.
 - The cluster workflow takes a `replicas` input, so the same trace can run on a larger pool of simulated pods, and
   report titles name the pool size.
+- Eight runs of six routers on eight pods in `results/eight-pods/`: the prefix routers' pile-up grows with the pool
+  (prefix-only at 0.29 balance, the chart's default at 0.36), `prefix-active` stays even at 0.93 while beating
+  round-robin and load-aware on median, p99 and hits in every run, and load-aware's edge over round-robin is gone.
 
 ### Fixed
 - A simulated pod requested 250m CPU; eight of them left the router Pending on a 4-CPU runner and the run failed
