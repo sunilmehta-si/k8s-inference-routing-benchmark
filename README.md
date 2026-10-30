@@ -271,6 +271,9 @@ flowchart LR
   pods' own counts, not an inference from latency.
 - **Comparisons refuse to be unfair.** Results name their trace by sha256 and their model servers by image and
   configuration; `irb report` will not put side by side results that replayed different traffic or servers.
+- **A claim has to hold in every run.** Routers run eight times each on fresh clusters; `irb compare` counts, per
+  metric and pair of routers, the runs each was better in, and the README only states a difference that held in all
+  of them. A test reads every claim in this README against the committed runs, so a claim that stops holding fails CI.
 - **The router fails closed.** The chart's default lets traffic bypass an unreachable endpoint picker; here a
   broken picker fails requests instead of silently measuring no routing at all.
 
