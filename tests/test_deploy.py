@@ -228,6 +228,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("is not a plugin type at $ROUTER_COMMIT", chart_job)            # typos fail before a cluster run
         steps = "\n".join(s.get("run", "") for s in run["steps"])
         self.assertIn("scripts/cluster-up.sh", steps)                                  # every repeat builds its own cluster
+        self.assertIn('scripts/deploy-servers.sh "$REPLICAS"', steps)                  # the pod count is a dispatch input
+        self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["replicas"]["default"], "4")
+        self.assertEqual(run["env"]["REPLICAS"], "${{ inputs.replicas || '4' }}")
         self.assertIn('scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"', steps)
         uploads = [s["with"]["name"] for s in run["steps"] if "upload-artifact" in s.get("uses", "")]
         self.assertEqual(uploads, ["result-${{ matrix.mode }}-r${{ matrix.repeat }}"])  # repeats don't overwrite each other
