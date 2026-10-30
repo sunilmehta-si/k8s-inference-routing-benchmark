@@ -59,6 +59,14 @@ Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-infer
   live sessions) is about twice one pod's cache and fits in all four together, the regime where routing decides the
   hit rate. A larger cache relative to the traffic would make every router look the same; a smaller one, none.
 
+### Pool size
+
+Four pods is the default: enough for a prefix router to concentrate work on a few and for the spread to show, few
+enough that every router's run fits a CI runner's four CPUs beside the render server and the router. The cluster
+workflow's `replicas` input runs the same trace on another pool size; the eight-pod dataset uses it. A result's
+`cluster.model_server.replicas` records the size, report titles name it, and the dataset tests check it, so runs on
+different pool sizes are never compared as if they were the same cluster.
+
 ## The routers
 
 `round-robin` is a ClusterIP Service. The others are the [llm-d Router](https://github.com/llm-d/llm-d-router)
