@@ -51,6 +51,11 @@ def _parser() -> argparse.ArgumentParser:
     cp.add_argument("--held", action="store_true", help="Only the differences that held in every shared run.")
     cp.add_argument("--output", "-o")
 
+    vs = sub.add_parser("versions", help="Compare the pins in deploy/versions.env with upstream's latest releases.")
+    vs.add_argument("--strict", action="store_true",
+                    help="Exit 1 when a newer release is old enough to adopt (releases younger than 14 days only warn).")
+    vs.add_argument("--output", "-o", help="Write the Markdown table here instead of stdout.")
+    vs.add_argument("--json", metavar="PATH", help="Also write the rows as JSON here.")
     ch = sub.add_parser("chart", help="SVG of TTFT and prefix-cache hits per router.")
     ch.add_argument("results", nargs="+")
     ch.add_argument("--title", required=True)
@@ -104,6 +109,28 @@ def _cmd_run(args) -> int:
     return 0 if s["errors"] == 0 and s["client"]["kept_up"] else 1
 
 
+def _cmd_versions(args: argparse.Namespace) -> int:
+    from datetime import date
+
+    from .versions import VersionsError, as_json, markdown, read_pins, report
+    today = date.today()
+    try:
+        rows = report(read_pins())
+    except (OSError, VersionsError) as exc:
+        print(f"irb: {exc}", file=sys.stderr)
+        return 2
+    text = markdown(rows, today)
+    if args.json:
+        Path(args.json).write_text(as_json(rows, today))
+    _write(text, args.output)
+    waiting = [r for r in rows if r.too_new(today)]
+    if waiting:
+        print("irb: too new to adopt yet: " + ", ".join(f"{r.name} {r.latest.tag} from {r.adoptable_on}" for r in waiting),
+              file=sys.stderr)
+    ready = [r for r in rows if r.status != "current" and not r.too_new(today)]
+    return 1 if args.strict and ready else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
@@ -131,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
             runs = [load(p) for p in args.results]
             _write(table(held(runs) if args.held else pairs(runs)), args.output)
             return 0
+        if args.command == "versions":
+            return _cmd_versions(args)
         if args.command == "chart":
             from .chart import svg
             from .results import load
