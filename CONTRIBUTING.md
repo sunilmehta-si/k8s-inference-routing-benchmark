@@ -45,6 +45,15 @@ when it held in every run both routers had; "in seven of eight" is said as such.
 dataset's test class against `held()` or `pairs()`, so a claim that stops holding fails CI. A superlative across
 datasets ("most of any router") is a lead to test in one run, not a result.
 
+## Bump a pinned release
+
+Everything the cluster runs is pinned in `deploy/versions.env`; `irb versions` (or `make versions`) says which pins
+have a newer release upstream and from which date it counts as adoptable (14 days after publication, so a withdrawn
+release is never measured). The router moves as one: `ROUTER_VERSION`, `ROUTER_COMMIT` and `EPP_IMAGE` change
+together, and the CI chart job checks the chart's default scoring still matches `router-default.yaml`. Bump in its own
+pull request and wait for the `cluster` workflow on it: a result that moved is the release changing behaviour, and
+the pull request should say so.
+
 ## Before you open a pull request
 
 - `python -m unittest discover -s tests -t .` passes.
