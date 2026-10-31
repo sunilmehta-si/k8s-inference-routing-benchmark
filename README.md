@@ -332,6 +332,10 @@ flowchart LR
 - **The servers report what happened.** The run reads every pod's `vllm:prefix_cache_hits_total`,
   `prefix_cache_queries_total` and `request_success_total` before and after, so the hit rate and load spread are the
   pods' own counts, not an inference from latency.
+- **The prefix picture is estimated or real, by mode.** The `prefix-*` routers score with the picker's memory of where
+  it sent earlier prompts, the router's default. The `precise-*` routers subscribe to each pod's KV-cache events and
+  score with what the pods really hold, the same way vLLM reports it, so a pair such as `prefix-active` and
+  `precise-active` isolates what the better picture is worth.
 - **Comparisons refuse to be unfair.** Results name their trace by sha256 and their model servers by image and
   configuration; `irb report` will not put side by side results that replayed different traffic or servers.
 - **A claim has to hold in every run.** Routers run eight times each on fresh clusters; `irb compare` counts, per
