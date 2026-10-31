@@ -21,16 +21,32 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSIONS = ROOT / "deploy" / "versions.env"
-# The GitHub repository that publishes each pinned release. Image pins are compared by the tag before their digest.
+# The GitHub repository that publishes each pinned release. Image pins are compared by the release inside their tag.
 COMPONENTS = {
     "KIND_VERSION": "kubernetes-sigs/kind",
     "SIM_IMAGE": "llm-d/llm-d-inference-sim",
     "RENDER_IMAGE": "vllm-project/vllm",
     "ROUTER_VERSION": "llm-d/llm-d-router",
+    "EPP_IMAGE": "llm-d/llm-d-router",
+    "ENVOY_IMAGE": "envoyproxy/envoy",
     "GIE_VERSION": "kubernetes-sigs/gateway-api-inference-extension",
     "HELM_VERSION": "helm/helm",
+    "PYTHON_IMAGE": "python/cpython",
+}
+# Pins that are not releases to compare, and why. Every line in versions.env is in COMPONENTS or here, so a new pin
+# has to say which it is.
+NOT_COMPARED = {
+    "KIND_NODE_IMAGE": "chosen from the kind release's notes, which list the node images built for it",
+    "KIND_CONTEXT": "the kubectl context the scripts refuse to act outside of",
+    "MODEL": "the model the render server tokenizes for; a name, not a release",
+    "ROUTER_REPO": "where ROUTER_COMMIT is fetched from",
+    "ROUTER_COMMIT": "the commit ROUTER_VERSION's tag points at; a bump changes both lines",
+    "KIND_SHA256_LINUX_AMD64": "the checksum of the pinned download",
+    "GIE_CRDS_SHA256": "the checksum of the pinned download",
+    "HELM_SHA256_LINUX_AMD64": "the checksum of the pinned download",
 }
 SEMVER = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
+TAG_VERSION = re.compile(r"v?\d+\.\d+\.\d+")
 MIN_RELEASE_AGE_DAYS = 14
 
 
@@ -76,12 +92,15 @@ def read_pins(path: Path = VERSIONS) -> dict[str, str]:
 
 
 def pinned_version(value: str) -> str:
-    """The release a pin names: the tag of an image reference (registry/name:tag@sha256:...), else the value itself."""
+    """The release a pin names. For an image reference (registry/name:tag@sha256:...) it is the x.y.z inside the tag:
+    `distroless-v1.33.2` is Envoy v1.33.2 and `3.12.12-slim-bookworm` is CPython 3.12.12. Else the value itself."""
     if "/" in value or "@" in value:
         name_tag = value.split("@", 1)[0].rsplit("/", 1)[-1]
         if ":" not in name_tag:
             raise VersionsError(f"{value}: an image pin needs a tag before its digest to compare")
-        return name_tag.split(":", 1)[1]
+        tag = name_tag.split(":", 1)[1]
+        found = TAG_VERSION.search(tag)
+        return found.group(0) if found else tag
     return value
 
 

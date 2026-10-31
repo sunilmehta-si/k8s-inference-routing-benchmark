@@ -6,7 +6,7 @@ from unittest import mock
 
 from inference_routing_bench import versions
 from inference_routing_bench.cli import main
-from inference_routing_bench.versions import (COMPONENTS, Release, Row, VersionsError, compare, markdown,
+from inference_routing_bench.versions import (COMPONENTS, NOT_COMPARED, Release, Row, VersionsError, compare, markdown,
                                               pinned_version, read_pins, report)
 
 TODAY = date(2026, 10, 31)
@@ -25,6 +25,8 @@ class CompareTests(unittest.TestCase):
     def test_an_image_pin_is_compared_by_its_tag(self):
         self.assertEqual(pinned_version("ghcr.io/llm-d/llm-d-inference-sim:v1.0.0@sha256:" + "0" * 64), "v1.0.0")
         self.assertEqual(pinned_version("docker.io/vllm/vllm-openai-cpu:v0.21.0@sha256:" + "0" * 64), "v0.21.0")
+        self.assertEqual(pinned_version("docker.io/envoyproxy/envoy:distroless-v1.33.2@sha256:" + "0" * 64), "v1.33.2")
+        self.assertEqual(pinned_version("docker.io/library/python:3.12.12-slim-bookworm@sha256:" + "0" * 64), "3.12.12")
         self.assertEqual(pinned_version("v0.33.0"), "v0.33.0")
         with self.assertRaisesRegex(VersionsError, "tag"):
             pinned_version("ghcr.io/llm-d/llm-d-inference-sim@sha256:" + "0" * 64)   # a digest alone names no release
@@ -36,6 +38,12 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(set(COMPONENTS) - set(pins), set())
         self.assertEqual(pinned_version(pins["SIM_IMAGE"]), "v1.0.0")
         self.assertEqual(pins["ROUTER_VERSION"], "v1.0.0")
+
+    def test_every_pin_is_compared_or_says_why_not(self):
+        # a new line in versions.env has to be mapped to the repository that releases it, or listed with its reason
+        pins = read_pins()
+        self.assertEqual(set(pins), set(COMPONENTS) | set(NOT_COMPARED))
+        self.assertEqual(set(COMPONENTS) & set(NOT_COMPARED), set())
 
     def test_the_router_pins_move_together(self):
         # ROUTER_VERSION is what the report compares; the chart commit and the picker image must be that release
