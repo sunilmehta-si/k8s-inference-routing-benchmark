@@ -90,10 +90,12 @@ class _OneRunDataset:
 
     TRACE = "chat-rag-mix"
 
+    CI_RUNS = 1      # dispatches the repeats came from; more than one when a run's repeats were split over dispatches
+
     def test_one_clean_ci_run_with_eight_repeats_of_every_router(self):
         comparable(self.runs)
         self.assertEqual({r["trace"]["fingerprint"] for r in self.runs}, {FINGERPRINTS[self.TRACE]})
-        self.assertEqual(len({r["run_url"] for r in self.runs}), 1)
+        self.assertEqual(len({r["run_url"] for r in self.runs}), self.CI_RUNS)
         groups = dict(by_mode(self.runs))
         self.assertEqual(tuple(groups), self.MODES_HERE)
         for mode, rs in groups.items():
@@ -250,6 +252,34 @@ class EightPodResultsTests(_OneRunDataset, unittest.TestCase):
         medians = {m: sorted(r["pods"]["balance"] for r in self.runs if r["mode"] == m)[3:5] for m in prefix_routers}
         for m, (lo, hi) in medians.items():
             self.assertLess((lo + hi) / 2, 0.61, m)                                # the pile-up numbers in the table
+
+
+class PreciseResultsTests(_OneRunDataset, unittest.TestCase):
+    """The picker's estimate of each pod's cache against the pods' real contents, read from their KV-cache events:
+    three approximate routers and their precise counterparts, same scorers and weights."""
+    DIR, REPORT_TITLE = "precise", "precise (chat-rag-mix)"
+    MODES_HERE = ("prefix-aware", "precise-aware", "prefix-active", "precise-active", "prefix-queue", "precise-queue")
+    TITLE = "Real cache contents instead of the picker's estimate: 4 simulated vLLM pods, 1,672 requests"
+    CI_RUNS = 2      # repeats 1-3 and 4-8 were two dispatches of the same commit, hours apart
+
+    def test_what_the_readme_says_about_the_precise_index(self):
+        pairs_here = (("precise-aware", "prefix-aware"), ("precise-active", "prefix-active"), ("precise-queue", "prefix-queue"))
+        for precise, approximate in pairs_here:
+            self.assertIn(("Prefix-cache hit rate", precise, approximate), self.found)        # every pair, every run
+        for precise, approximate in pairs_here[1:]:
+            for metric in ("TTFT p99", "Goodput", "RAG TTFT p95"):
+                self.assertIn((metric, precise, approximate), self.found)
+        # the cost: a tokenizer round trip per request; prefix-active keeps the better median in every run
+        self.assertIn(("TTFT p50", "prefix-active", "precise-active"), self.found)
+        wins = {(p.metric, frozenset((p.a, p.b))): {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)}
+        self.assertEqual(wins[("TTFT p99", frozenset(pairs_here[0]))]["precise-aware"], 7)
+        self.assertEqual(wins[("TTFT p50", frozenset(pairs_here[2]))]["precise-queue"], 1)
+        # no pair settles the load balance; the precise index changes where prompts go, not how the load scorer pulls
+        self.assertEqual({f[0] for f in self.found if {f[1], f[2]} in [set(p) for p in pairs_here]} & {"Load balance"}, set())
+        hits = {m: sorted(r["pods"]["prefix_cache_hit_rate"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        for precise, approximate in pairs_here:
+            gain = sum(hits[precise]) / 2 - sum(hits[approximate]) / 2
+            self.assertTrue(0.02 <= gain <= 0.035, (precise, gain))                     # "two to three points" in the README
 
 
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
