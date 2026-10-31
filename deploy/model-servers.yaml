@@ -41,6 +41,11 @@ data:
     kv-cache-size: 2048
     block-size: 16
     hash-seed: "42"
+    # Each pod publishes its cache's block-stored and block-removed events on port 5557, the way vLLM does, so a
+    # router running the precise prefix-cache producer can index what every pod really holds instead of
+    # estimating it from where it sent earlier prompts. Routers that do not subscribe cost nothing: a ZMQ
+    # publisher with no subscriber drops its messages.
+    zmq-endpoint: "tcp://*:5557"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -130,7 +135,7 @@ spec:
               valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
             - name: POD_IP
               valueFrom: {fieldRef: {fieldPath: status.podIP}}
-          ports: [{name: http, containerPort: 8000}]
+          ports: [{name: http, containerPort: 8000}, {name: kv-events, containerPort: 5557}]
           readinessProbe:
             httpGet: {path: /health, port: 8000}
             periodSeconds: 2

@@ -62,6 +62,20 @@ class ModelServerTests(unittest.TestCase):
         self.assertIn("http://render.irb.svc:8082", args)
         self.assertEqual(sim["spec"]["template"]["metadata"]["labels"], {"app": "sim"})
 
+    def test_every_pod_publishes_its_cache_events_for_the_precise_prefix_router(self):
+        # The precise prefix-cache producer subscribes to tcp://<pod IP>:5557 and expects the topic kv@<ip>:<port>@<model>,
+        # which the simulator builds from POD_IP and its serving port. A publisher that dials instead of binding
+        # would never be reached, and without POD_IP the simulator refuses to start its cache.
+        cm = next(d for d in self.docs if d["kind"] == "ConfigMap")
+        cfg = yaml.safe_load(cm["data"]["config.yaml"])
+        self.assertEqual(cfg["zmq-endpoint"], "tcp://*:5557")
+        self.assertEqual(cfg["block-size"], 16)
+        sim = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "sim")
+        container = sim["spec"]["template"]["spec"]["containers"][0]
+        self.assertIn({"name": "kv-events", "containerPort": 5557}, container["ports"])
+        pod_ip = next(e for e in container["env"] if e["name"] == "POD_IP")
+        self.assertEqual(pod_ip["valueFrom"]["fieldRef"]["fieldPath"], "status.podIP")
+
     def test_eight_pods_and_the_router_fit_a_four_cpu_runner(self):
         # kube-system on a kind node asks for about a CPU; everything the benchmark adds must fit in the other three
         def millicores(value):
