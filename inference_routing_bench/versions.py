@@ -31,12 +31,12 @@ COMPONENTS = {
     "ENVOY_IMAGE": "envoyproxy/envoy",
     "GIE_VERSION": "kubernetes-sigs/gateway-api-inference-extension",
     "HELM_VERSION": "helm/helm",
-    "PYTHON_IMAGE": "python/cpython",
 }
 # Pins that are not releases to compare, and why. Every line in versions.env is in COMPONENTS or here, so a new pin
 # has to say which it is.
 NOT_COMPARED = {
     "KIND_NODE_IMAGE": "chosen from the kind release's notes, which list the node images built for it",
+    "PYTHON_IMAGE": "CPython publishes tags, not GitHub releases, and the image follows the 3.12 line, not the newest",
     "KIND_CONTEXT": "the kubectl context the scripts refuse to act outside of",
     "MODEL": "the model the render server tokenizes for; a name, not a release",
     "ROUTER_REPO": "where ROUTER_COMMIT is fetched from",
