@@ -13,7 +13,7 @@ Each cell is the median of 8 runs per router, with the range in brackets; every 
 | Prefix-cache hit rate (from the pods) <sub>higher is better</sub> | 64.1% <sub>(63.5%–65.0%)</sub> | 64.1% <sub>(63.4%–64.7%)</sub> | 80.0% <sub>(76.3%–80.1%)</sub> | 79.7% <sub>(78.3%–81.2%)</sub> | **80.6% <sub>(78.9%–81.2%)</sub>** |
 | Load balance across pods <sub>higher is better</sub> | **0.968 <sub>(0.931–0.993)</sub>** | 0.960 <sub>(0.929–0.993)</sub> | 0.571 <sub>(0.535–0.627)</sub> | 0.554 <sub>(0.515–0.620)</sub> | 0.567 <sub>(0.524–0.629)</sub> |
 | Output tokens per second <sub>higher is better</sub> | 436.9 <sub>(426.3–446.4)</sub> | 435.4 <sub>(420.8–454.5)</sub> | **442.9 <sub>(439.3–445.1)</sub>** | 440.9 <sub>(437.6–448.9)</sub> | 438.5 <sub>(425.4–449.9)</sub> |
-| Errors <sub>lower is better</sub> | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Errors <sub>lower is better</sub> | 0 | 0 | 0 | 0 | 0 |
 
 **TTFT p95 by kind of traffic (ms)**
 

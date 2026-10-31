@@ -22,7 +22,7 @@ ROWS = [
     ("Prefix-cache hit rate (from the pods)", lambda r: (r.get("pods") or {}).get("prefix_cache_hit_rate"), "%", False),
     ("Load balance across pods", lambda r: (r.get("pods") or {}).get("balance"), "", False),
     ("Output tokens per second", lambda r: r["summary"]["throughput"]["output_tokens_per_s"], "", False),
-    ("Errors", lambda r: r["summary"]["errors"], "", True),
+    ("Errors", lambda r: r["summary"]["errors"], "n", True),
 ]
 
 
@@ -31,7 +31,7 @@ def _fmt(value, unit: str) -> str:
         return "n/a"
     if unit == "%":
         return f"{value * 100:.1f}%"
-    if unit == "ms":
+    if unit in ("ms", "n"):                           # a count's median is still shown as a count
         return f"{value:,.0f}"
     if isinstance(value, float):
         return f"{value:,.3f}" if value < 10 else f"{value:,.1f}"
