@@ -22,6 +22,33 @@ Everything below is read from the llm-d Router source at the pinned commit
 so requests that arrive between two scrapes are all scored on the same numbers. The active-request count changes as
 the router sends each request.
 
+## Where the prefix score comes from
+
+`prefix-cache-scorer` scores a pod by the share of the prompt's blocks it holds, but it does not look in the pods'
+caches itself; a *producer* hands it that picture per pod, and the router ships two.
+
+- **Approximate** (every `prefix-*` mode, `router-default`): the
+  [`approximate-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/requestcontrol/dataproducer/approximateprefix/plugin.go)
+  the scorer spawns by default. After each routing decision it records that the chosen pod now holds this prompt's
+  block hashes, in an LRU of its own, and scores later prompts against that record. It is a memory of where the
+  router sent things: it does not know when a pod evicted a block, and it never sees requests that reached a pod
+  another way.
+- **Precise** (the `precise-*` modes): the
+  [`precise-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/requestcontrol/dataproducer/preciseprefixcache/producer.go#L343-L433)
+  reads what the pods say they hold. Each simulated pod publishes its cache's block-stored and block-removed events
+  over ZMQ on port 5557, as vLLM does, on the topic
+  [`kv@<ip>:<port>@<model>`](https://github.com/llm-d/llm-d-inference-sim/blob/v1.0.0/pkg/kvcache/block_cache.go#L477); the producer learns the pods from the picker's
+  endpoint notifications, [opens one subscriber per pod](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/requestcontrol/dataproducer/preciseprefixcache/extractor.go#L66-L72),
+  and keeps an index of block hash → pods. Each event carries the blocks' token ids, so the producer re-hashes
+  them with its own block size and seed and nothing has to match the pods' hashing. A prompt is tokenized on the
+  pods' render server by the `token-producer`, hashed in the same 16-token blocks, and looked up; the score is the
+  matched share per pod, keyed by `<address>:<port>` to line up with the topic.
+
+The precise picture costs a tokenizer call per request and a subscription per pod; what it buys is the question the
+`precise-*` runs answer. The two can differ in either direction: the approximate record overstates a pod that has
+since evicted the blocks, and understates the pod that holds a prefix the router did not know about (here, nothing
+reaches the pods around the router, so that case does not arise).
+
 ## What the ranges predict
 
 Written before the runs of the last four modes, so the results can prove it wrong.
