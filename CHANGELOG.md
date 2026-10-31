@@ -17,6 +17,8 @@ which pins have newer releases upstream.
   router's precise prefix-cache producer, which subscribes to every pod's events and indexes the blocks it holds;
   prompts are tokenized on the pods' render server. Same scorers and weights as the counterparts.
 - Eight runs of the three pairs in `results/precise/`, with the claims in the README tested against them.
+- `precise-active-spec`: `precise-active` with the producer's speculative indexing, which credits the chosen pod with a
+  prompt's blocks at once instead of waiting for its event; its runs are the next dataset.
 - `irb versions` (and `make versions`): each pin in `deploy/versions.env` against the latest release upstream, with
   the date from which a newer release counts as adoptable (14 days after publication); image pins are compared by the
   release in their tag, and every pin is either compared or listed with the reason it is not. A CI job posts the
