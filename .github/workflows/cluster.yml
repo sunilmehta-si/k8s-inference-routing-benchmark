@@ -25,7 +25,7 @@ on:
         default: "[1, 2, 3]"
       modes:
         description: Routers to run (JSON list)
-        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2"]'
+        default: '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2", "precise-aware", "precise-active", "precise-queue"]'
   schedule:
     - cron: "41 3 * * 1"
 
@@ -55,7 +55,7 @@ jobs:
         # runs of one dispatch share a time window whatever their repeat number.
         # A push checks that every router still runs: one repeat of each. The weekly run and a dispatch repeat.
         repeat: ${{ fromJSON(inputs.repeats || (github.event_name == 'push' && '[1]' || '[1, 2, 3]')) }}
-        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2"]') }}
+        mode: ${{ fromJSON(inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2", "precise-aware", "precise-active", "precise-queue"]') }}
     env:
       MODE: ${{ matrix.mode }}
       REPEAT: ${{ matrix.repeat }}
@@ -128,7 +128,7 @@ jobs:
       - name: Compare the routers
         env:
           # The routers this run measured, in the order given, so every router the matrix ran gets a column.
-          MODES: ${{ inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2"]' }}
+          MODES: ${{ inputs.modes || '["round-robin", "load-aware", "prefix-aware", "prefix-load-aware", "prefix-load-2x", "prefix-load-q8", "prefix-queue", "prefix-running", "prefix-active", "router-default", "prefix-active-p2", "prefix-active-a2", "precise-aware", "precise-active", "precise-queue"]' }}
         run: |
           shopt -s nullglob
           runs=()
