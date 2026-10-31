@@ -4,6 +4,28 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-31
+
+The endpoint picker can now score with the pods' real cache contents instead of its own estimate, and the first
+dataset says what that is worth: two to three more points of cache hits in every pair and every run, a better tail
+where a load scorer sits beside the prefix score, and a tokenizer round trip at the median. A versions report says
+which pins have newer releases upstream.
+
+### Added
+- The simulated pods publish their KV-cache block events over ZMQ on port 5557, as vLLM does.
+- `precise-aware`, `precise-active`, `precise-queue`: `prefix-aware`, `prefix-active` and `prefix-queue` with the
+  router's precise prefix-cache producer, which subscribes to every pod's events and indexes the blocks it holds;
+  prompts are tokenized on the pods' render server. Same scorers and weights as the counterparts.
+- Eight runs of the three pairs in `results/precise/`, with the claims in the README tested against them.
+- `irb versions` (and `make versions`): each pin in `deploy/versions.env` against the latest release upstream, with
+  the date from which a newer release counts as adoptable (14 days after publication); image pins are compared by the
+  release in their tag, and every pin is either compared or listed with the reason it is not. A CI job posts the
+  table weekly.
+- [docs/scorers.md](docs/scorers.md) explains the approximate and precise producers and what each can get wrong.
+
+### Fixed
+- Report tables show the errors row as a count, not `0.000`.
+
 ## [0.3.0] - 2026-10-30
 
 Three more datasets, 144 cluster runs, that place the earlier results: the prefix routers' pile-up grows with the
