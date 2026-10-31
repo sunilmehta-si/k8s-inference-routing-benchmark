@@ -303,6 +303,43 @@ Medians:
   scorer's ties fall to the picker's rotation, which is round-robin.
 - **Goodput told nothing.** Every router kept 99.3 to 99.7% of requests under a second, and no difference held.
 
+### Does the real cache picture beat the estimate?
+
+Every prefix router so far scored with the picker's memory of where it sent earlier prompts. The `precise-*` routers
+subscribe to each pod's KV-cache events and score with what the pods really hold
+([how the two differ](docs/scorers.md#where-the-prefix-score-comes-from)). Eight runs of three approximate routers and
+their precise counterparts, same scorers and weights
+([runs 1 to 3](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41172235563),
+[runs 4 to 8](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41172674385),
+[full results](results/precise/README.md)).
+
+![TTFT, prefix-cache hits and load balance: each approximate router beside its precise counterpart](results/precise/chart.svg)
+
+Medians:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| prefix-aware | 93 ms | 780 ms | 1,303 ms | 79.6% | 0.57 | 97.8% |
+| precise-aware | 91 ms | 601 ms | 876 ms | **82.6%** | 0.60 | 99.5% |
+| prefix-active | **71 ms** | 524 ms | 693 ms | 76.7% | 0.95 | 99.6% |
+| precise-active | 84 ms | **497 ms** | **634 ms** | 79.1% | **0.96** | **100.0%** |
+| prefix-queue | 83 ms | 610 ms | 919 ms | 80.1% | 0.66 | 99.6% |
+| precise-queue | 88 ms | 575 ms | 769 ms | 82.5% | 0.68 | 99.9% |
+
+- **The real picture finds two to three more points of cache hits, in every pair and every run.** The estimate
+  forgets nothing but learns nothing either: it does not see a pod evict a block, and after a burst lands on one pod
+  it goes on sending that document there. The index built from the pods' events sends the next prompt to the pod
+  that still holds the blocks.
+- **With a load scorer beside it, the hits turn into a better tail.** `precise-active` beat `prefix-active`, and
+  `precise-queue` beat `prefix-queue`, on TTFT p99, goodput and the RAG p95 in all eight runs; `precise-aware` beat
+  `prefix-aware` on p99 in seven. The p99 moves by 60 to 150 ms.
+- **The price is a tokenizer round trip per request.** The precise producer tokenizes every prompt on the render
+  server before it can look blocks up, and that shows at the median: `prefix-active` kept the better TTFT p50 in all
+  eight runs against `precise-active` (71 against 84 ms), and `prefix-queue` in seven against `precise-queue`.
+  A picker with a local tokenizer would pay less.
+- **It does not change how evenly the work is spread.** No pair settled the load balance in every run; the index
+  changes which pod a prompt's prefix points at, and the load scorer beside it pulls as before.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -386,7 +423,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | `prefix-active-p2` and `router-default` in the same run | Done: not reliably different on latency or hits; p2 spreads the work better in seven of eight |
 | The same trace on eight pods | Done: the pile-up grows with the pool; `prefix-active` stays even, eight runs |
 | A control trace where almost nothing repeats (`one-off-heavy`) | Done: the rescaled routers still beat round-robin and load-aware on every latency, eight runs |
-| Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Next |
+| Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Done: two to three more points of cache hits and a better tail in every pair, for a tokenizer round trip at the median; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
