@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Monday 04:31 UTC, for the versions job: the tests do not change between pushes, upstream's releases do.
+    - cron: "31 4 * * 1"
 
 # `shell: bash` runs steps with -eo pipefail; the default (-e only) lets `script | tee` pass when the script fails.
 defaults:
@@ -90,3 +93,22 @@ jobs:
             grep -rqF --include='*.go' "\"$type\"" "$src/pkg" || { echo "::error::$type is not a plugin type at $ROUTER_COMMIT"; exit 1; }
             echo "$type: registered"
           done
+  versions:
+    # Which pinned releases have newer ones upstream, in the run's summary. It reports and does not fail the build: a
+    # new upstream release, or the API being unreachable, is not a defect in this repository. A bump is a pull request
+    # of its own with a cluster run, because a new router can score differently.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Compare the pins with upstream releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: irb versions -o "$GITHUB_STEP_SUMMARY"
