@@ -18,10 +18,20 @@ KNOWN_PLUGINS = {
     "running-requests-size-scorer",
     "active-request-scorer",
     "kv-cache-utilization-scorer",
+    "token-producer",
+    "endpoint-notification-source",
+    "precise-prefix-cache-producer",
 }
 # Modes that are prefix-load-aware with the load-aware scorer swapped for another of the router's load scorers.
 SWAPPED_LOAD_SCORERS = {"prefix-queue": "queue-scorer", "prefix-running": "running-requests-size-scorer",
                         "prefix-active": "active-request-scorer"}
+# Plugins that feed the scorers rather than score: they are declared but never appear in the scheduling profile.
+NON_PROFILE_PLUGINS = {"single-profile-handler", "token-producer", "endpoint-notification-source",
+                       "precise-prefix-cache-producer"}
+# Modes that are the approximate prefix router of the same name with the picker's estimate replaced by the pods'
+# real cache contents, read from their KV-cache events.
+PRECISE_COUNTERPARTS = {"precise-aware": "prefix-aware", "precise-active": "prefix-active",
+                        "precise-queue": "prefix-queue"}
 
 
 def versions() -> dict[str, str]:
@@ -137,7 +147,7 @@ class RouterConfigTests(unittest.TestCase):
             with self.subTest(mode=path.stem):
                 self.assertEqual(types - KNOWN_PLUGINS, set())
                 profile = config["schedulingProfiles"][0]["plugins"]
-                self.assertEqual({p["pluginRef"] for p in profile}, types - {"single-profile-handler"})
+                self.assertEqual({p["pluginRef"] for p in profile}, types - NON_PROFILE_PLUGINS)
             scorers[path.stem] = sorted(t for t in types if t.endswith("-scorer"))
         self.assertEqual(scorers, {"load-aware": ["load-aware-scorer"], "prefix-aware": ["prefix-cache-scorer"],
                                    "prefix-load-aware": ["load-aware-scorer", "prefix-cache-scorer"],
@@ -148,7 +158,33 @@ class RouterConfigTests(unittest.TestCase):
                                    "prefix-active": ["active-request-scorer", "prefix-cache-scorer"],
                                    "router-default": ["kv-cache-utilization-scorer", "prefix-cache-scorer", "queue-scorer"],
                                    "prefix-active-p2": ["active-request-scorer", "prefix-cache-scorer"],
-                                   "prefix-active-a2": ["active-request-scorer", "prefix-cache-scorer"]})
+                                   "prefix-active-a2": ["active-request-scorer", "prefix-cache-scorer"],
+                                   "precise-aware": ["prefix-cache-scorer"],
+                                   "precise-active": ["active-request-scorer", "prefix-cache-scorer"],
+                                   "precise-queue": ["prefix-cache-scorer", "queue-scorer"]})
+
+    def test_each_precise_mode_is_its_counterpart_with_the_real_cache_index(self):
+        def config(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            return yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+        sim = yaml.safe_load(next(d for d in yaml.safe_load_all((ROOT / "deploy/model-servers.yaml").read_text())
+                                  if d and d["kind"] == "ConfigMap")["data"]["config.yaml"])
+        for precise, approximate in PRECISE_COUNTERPARTS.items():
+            with self.subTest(mode=precise):
+                cfg, base = config(precise), config(approximate)
+                plugins = {p["type"]: p.get("parameters", {}) for p in cfg["plugins"]}
+                # the same scorers and weights as the counterpart; only where the prefix score comes from differs
+                self.assertEqual(cfg["schedulingProfiles"], base["schedulingProfiles"])
+                self.assertEqual(set(plugins) - set(p["type"] for p in base["plugins"]),
+                                 {"token-producer", "endpoint-notification-source", "precise-prefix-cache-producer"})
+                self.assertEqual(plugins["prefix-cache-scorer"], {"prefixMatchInfoProducerName": "precise-prefix-cache-producer"})
+                # the picker hashes the pods' token ids in blocks of the pods' own size, and tokenizes on the
+                # render server the pods use, so a prompt's blocks hash the same on both sides
+                self.assertEqual(plugins["precise-prefix-cache-producer"]["tokenProcessorConfig"]["blockSizeTokens"], sim["block-size"])
+                self.assertEqual(plugins["token-producer"], {"modelName": versions()["MODEL"], "vllm": {"url": "http://render.irb.svc:8082"}})
+                # the producer learns the pods from the endpoint notifications and opens one subscriber per pod
+                self.assertEqual(cfg["dataLayer"]["sources"], [{"pluginRef": "endpoint-notification-source",
+                                                                "extractors": [{"pluginRef": "precise-prefix-cache-producer"}]}])
 
     def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
         def config(mode):

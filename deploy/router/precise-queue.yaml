@@ -1,0 +1,43 @@
+# precise-queue: prefix-queue with the prefix estimate replaced by each pod's real cache contents, read from its
+# KV-cache events; the queue scorer's scraped waiting count is the load signal, as in prefix-queue.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        # Tokenize the prompt on the render server the pods already share, so the picker hashes the same 16-token
+        # blocks the pods do; the pods report their cache contents as block events, keyed by those token ids.
+        - type: token-producer
+          parameters:
+            modelName: Qwen/Qwen2.5-1.5B-Instruct
+            vllm:
+              url: http://render.irb.svc:8082
+        - type: endpoint-notification-source
+        - type: precise-prefix-cache-producer
+          parameters:
+            tokenProcessorConfig:
+              blockSizeTokens: 16
+        - type: prefix-cache-scorer
+          parameters:
+            prefixMatchInfoProducerName: precise-prefix-cache-producer
+        - type: queue-scorer
+        - type: max-score-picker
+        dataLayer:
+          sources:
+          - pluginRef: endpoint-notification-source
+            extractors:
+            - pluginRef: precise-prefix-cache-producer
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: queue-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
