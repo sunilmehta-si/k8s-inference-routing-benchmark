@@ -161,7 +161,8 @@ class RouterConfigTests(unittest.TestCase):
                                    "prefix-active-a2": ["active-request-scorer", "prefix-cache-scorer"],
                                    "precise-aware": ["prefix-cache-scorer"],
                                    "precise-active": ["active-request-scorer", "prefix-cache-scorer"],
-                                   "precise-queue": ["prefix-cache-scorer", "queue-scorer"]})
+                                   "precise-queue": ["prefix-cache-scorer", "queue-scorer"],
+                                   "precise-active-spec": ["active-request-scorer", "prefix-cache-scorer"]})
 
     def test_each_precise_mode_is_its_counterpart_with_the_real_cache_index(self):
         def config(mode):
@@ -186,7 +187,15 @@ class RouterConfigTests(unittest.TestCase):
                 self.assertEqual(cfg["dataLayer"]["sources"], [{"pluginRef": "endpoint-notification-source",
                                                                 "extractors": [{"pluginRef": "precise-prefix-cache-producer"}]}])
 
-    def test_prefix_load_q8_differs_from_prefix_load_aware_only_in_the_queue_threshold(self):
+    def test_precise_active_spec_differs_from_precise_active_only_in_speculative_indexing(self):
+        def config(mode):
+            epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
+            return yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])
+        spec, base = config("precise-active-spec"), config("precise-active")
+        producer = next(p for p in spec["plugins"] if p["type"] == "precise-prefix-cache-producer")
+        self.assertTrue(producer["parameters"].pop("speculativeIndexing"))
+        self.assertEqual(spec, base)
+
         def config(mode):
             epp = yaml.safe_load((ROOT / f"deploy/router/{mode}.yaml").read_text())["router"]["epp"]
             return yaml.safe_load(epp["pluginsCustomConfig"][epp["pluginsConfigFile"]])

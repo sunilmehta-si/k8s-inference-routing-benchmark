@@ -1,0 +1,47 @@
+# precise-active-spec: precise-active with speculative indexing. The precise producer waits for a pod's block-stored
+# event before it credits the pod with a prompt's blocks; with speculativeIndexing it also records the blocks against
+# the pod it just chose, for two seconds, so the second request of a burst finds the same pod before the first has
+# finished prefilling. Asks how much of the estimate's one advantage, knowing where a prompt went at once, the precise
+# index gets back.
+router:
+  epp:
+    pluginsConfigFile: benchmark.yaml
+    pluginsCustomConfig:
+      benchmark.yaml: |
+        apiVersion: llm-d.ai/v1
+        kind: EndpointPickerConfig
+        plugins:
+        - type: single-profile-handler
+        - type: decode-filter
+        # Tokenize the prompt on the render server the pods already share, so the picker hashes the same 16-token
+        # blocks the pods do; the pods report their cache contents as block events, keyed by those token ids.
+        - type: token-producer
+          parameters:
+            modelName: Qwen/Qwen2.5-1.5B-Instruct
+            vllm:
+              url: http://render.irb.svc:8082
+        - type: endpoint-notification-source
+        - type: precise-prefix-cache-producer
+          parameters:
+            tokenProcessorConfig:
+              blockSizeTokens: 16
+            speculativeIndexing: true
+        - type: prefix-cache-scorer
+          parameters:
+            prefixMatchInfoProducerName: precise-prefix-cache-producer
+        - type: active-request-scorer
+        - type: max-score-picker
+        dataLayer:
+          sources:
+          - pluginRef: endpoint-notification-source
+            extractors:
+            - pluginRef: precise-prefix-cache-producer
+        schedulingProfiles:
+        - name: default
+          plugins:
+          - pluginRef: decode-filter
+          - pluginRef: prefix-cache-scorer
+            weight: 1.0
+          - pluginRef: active-request-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
