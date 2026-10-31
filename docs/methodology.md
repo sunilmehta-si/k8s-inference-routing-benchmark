@@ -131,6 +131,10 @@ router had "the most cache hits of any router", by about half a point, from diff
 the two were not reliably different ([head-to-head](../results/head-to-head/README.md)). A superlative across
 datasets is a lead to test in one run, not a result.
 
+A dataset's eight repeats normally come from one dispatch. The precise dataset came from two dispatches of the same
+commit a few hours apart (repeats 1 to 3, then 4 to 8); its test records that, and every other check (same trace,
+same servers, same tool version, no errors, the client kept up) applies across both.
+
 ## Limits
 
 - **A simulator is not a GPU.** It reproduces the timing model and the cache, not kernel effects such as batching

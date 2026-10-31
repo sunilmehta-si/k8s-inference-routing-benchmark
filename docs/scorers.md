@@ -10,11 +10,11 @@ Everything below is read from the llm-d Router source at the pinned commit
 
 | Scorer | Reads | Score for a pod | Widest gap between two pods | Modes |
 |---|---|---|---|---|
-| [`prefix-cache-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/prefix/plugin.go#L135-L187) | The router's own record of which prompt blocks it sent to which pod | Share of this prompt's blocks the pod holds | 1; about 0.98 for a RAG prompt whose document one pod has seen | every `prefix-*`, `router-default` |
+| [`prefix-cache-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/prefix/plugin.go#L135-L187) | The router's own record of which prompt blocks it sent to which pod | Share of this prompt's blocks the pod holds | 1; about 0.98 for a RAG prompt whose document one pod has seen | every `prefix-*`, `precise-*`, `router-default` |
 | [`load-aware-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/loadaware/load_aware.go#L100-L116) | Waiting queue, scraped | 0.5 when empty, else 0.5 × (1 − waiting / threshold), threshold 128 | 0.5 | `load-aware`, `prefix-load-*` |
-| [`queue-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/queuedepth/queue.go#L88-L117) | Waiting queue, scraped | (longest − its own) / (longest − shortest); 1 for every pod when the queues are equal | 1, but 0 while no pod has a longer queue than another | `prefix-queue`, `router-default` |
+| [`queue-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/queuedepth/queue.go#L88-L117) | Waiting queue, scraped | (longest − its own) / (longest − shortest); 1 for every pod when the queues are equal | 1, but 0 while no pod has a longer queue than another | `prefix-queue`, `precise-queue`, `router-default` |
 | [`running-requests-size-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/runningrequests/runningrequest.go#L88-L117) | Requests running, scraped | The same rescaling, of running counts | 1 | `prefix-running` |
-| [`active-request-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go#L170-L203) | Requests the router sent to the pod and has not seen finish: its own count, not scraped | 1 when idle, else (busiest − its own) / busiest | 1 | `prefix-active` |
+| [`active-request-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go#L170-L203) | Requests the router sent to the pod and has not seen finish: its own count, not scraped | 1 when idle, else (busiest − its own) / busiest | 1 | `prefix-active`, `precise-active` |
 | [`kv-cache-utilization-scorer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/scheduling/scorer/kvcacheutilization/kvcache_utilization.go#L86-L96) | KV-cache usage, scraped; the simulator reports the blocks running requests hold over all blocks | 1 − usage | The difference in usage | `router-default` |
 
 "Scraped" means read from the pods' `/metrics`, by default every
@@ -83,6 +83,17 @@ Eight runs of each in [one CI run](https://github.com/sunilmehta-si/k8s-inferenc
   p95 and p99 in every run and had the best p95 of all six. A likely reason, not measured here: the weight-3 prefix
   match decides when one pod clearly holds the prompt, and the two load signals at weight 2 decide between pods whose
   matches are close, a case the prediction did not consider.
+
+## The real cache picture
+
+The `precise-*` runs ([results](../results/precise/README.md)) swap the approximate producer for the precise one in
+`prefix-aware`, `prefix-active` and `prefix-queue`. Every precise router found two to three more points of cache hits
+than its counterpart in all eight runs: the estimate does not see evictions and keeps sending a document to the pod a
+burst first landed on, while the index follows the blocks. With a load scorer beside it the hits became a better tail
+(p99 60 to 150 ms lower, goodput and the RAG p95 better in every run). The cost sits at the median: the `token-producer`
+calls the render server for every prompt before the lookup, and `prefix-active` kept the better TTFT p50 in all eight
+runs (71 against 84 ms). The load balance did not change in any pair that held: the prefix score decides which pod a
+prompt points at, and the load scorer pulls as before.
 
 ## Weights around prefix-active
 
