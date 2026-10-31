@@ -75,7 +75,7 @@ different pool sizes are never compared as if they were the same cluster.
 
 `round-robin` is a ClusterIP Service. The others are the [llm-d Router](https://github.com/llm-d/llm-d-router)
 v1.0.0 in standalone mode: Envoy in the endpoint picker's pod, asking it over ext_proc where each request should go.
-The fourteen configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters
+The fifteen configurations in [`deploy/router/`](../deploy/router/) differ only in their scorers, weights and parameters
 ([what each scorer reads and scores](scorers.md)):
 
 - `load-aware`: `load-aware-scorer`, from the pods' waiting queues (it does not read running counts).
@@ -97,6 +97,9 @@ The fourteen configurations in [`deploy/router/`](../deploy/router/) differ only
   picker subscribes to every pod and indexes them, and prompts are tokenized on the pods' render server and looked up
   ([how the two producers differ](scorers.md#where-the-prefix-score-comes-from)). Same scorers and weights as the
   counterpart, so each pair measures what a true cache picture is worth.
+- `precise-active-spec`: `precise-active` with the producer's speculative indexing: the chosen pod is credited with a
+  prompt's blocks at once, for two seconds, instead of when its block-stored event arrives, so the second request of
+  a burst finds the first one's pod before it has finished prefilling.
 - `router-default`: the scoring the router chart installs by default (`queue-scorer` 2, `kv-cache-utilization-scorer`
   2, `prefix-cache-scorer` 3), on the same filter and picker as the rest. The CI chart job fails if the chart's
   default at the pinned commit stops matching it.
