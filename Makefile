@@ -1,6 +1,6 @@
 # Everyday commands. Python 3.10+ with the package installed (pip install -e .).
 PY ?= python3
-# MODE: round-robin, load-aware, prefix-aware or prefix-load-aware
+# MODE: round-robin, or any file in deploy/router/ but common.yaml (prefix-active, precise-active, router-default, ...)
 MODE ?= prefix-load-aware
 WORKLOAD ?= chat-rag-mix
 SPEEDUP ?= 2
