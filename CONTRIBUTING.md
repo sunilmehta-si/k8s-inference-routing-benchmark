@@ -19,6 +19,11 @@ the `modes` default in `.github/workflows/cluster.yml` (both places), the chart 
 configuration with the pinned chart and fails on a plugin type the pinned router does not register, so a typo is caught
 before a cluster run, not forty minutes into one.
 
+A mode that reads the pods' real caches rather than the picker's estimate adds the `token-producer`,
+`endpoint-notification-source` and `precise-prefix-cache-producer` plugins and a `dataLayer` section, as the
+`precise-*` files do; keep its profile identical to the approximate mode it mirrors and add the pair to
+`PRECISE_COUNTERPARTS` in `tests/test_deploy.py`, which checks exactly that.
+
 ## Add a workload
 
 A workload is a spec in `workloads/`; `irb trace generate` turns it into a seeded trace. Pin the trace's sha256 in
