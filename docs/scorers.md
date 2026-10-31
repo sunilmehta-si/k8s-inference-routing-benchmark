@@ -28,7 +28,7 @@ the router sends each request.
 caches itself; a *producer* hands it that picture per pod, and the router ships two.
 
 - **Approximate** (every `prefix-*` mode, `router-default`): the
-  [`approximate-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/requestcontrol/dataproducer/approximateprefix/plugin.go)
+  [`approx-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/blob/b9393d1a9f1d5a72ecd86f8d2b643ab54c2a9b92/pkg/epp/framework/plugins/requestcontrol/dataproducer/approximateprefix/plugin.go)
   the scorer spawns by default. After each routing decision it records that the chosen pod now holds this prompt's
   block hashes, in an LRU of its own, and scores later prompts against that record. It is a memory of where the
   router sent things: it does not know when a pod evicted a block, and it never sees requests that reached a pod
