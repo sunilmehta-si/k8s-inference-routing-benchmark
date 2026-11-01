@@ -282,6 +282,32 @@ class PreciseResultsTests(_OneRunDataset, unittest.TestCase):
             self.assertTrue(0.02 <= gain <= 0.035, (precise, gain))                     # "two to three points" in the README
 
 
+class PreciseSpecResultsTests(_OneRunDataset, unittest.TestCase):
+    """Speculative indexing on the precise index: does crediting the chosen pod at once, before its event arrives,
+    win back any of the median the estimate still holds?"""
+    DIR, REPORT_TITLE = "precise-spec", "precise-spec (chat-rag-mix)"
+    MODES_HERE = ("prefix-active", "precise-active", "precise-active-spec")
+    TITLE = "Speculative indexing on the precise index: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_speculative_indexing(self):
+        for precise in ("precise-active", "precise-active-spec"):
+            for metric in ("TTFT p99", "Goodput", "Prefix-cache hit rate", "RAG TTFT p95"):
+                self.assertIn((metric, precise, "prefix-active"), self.found)            # the precise result again
+            self.assertIn(("TTFT p50", "prefix-active", precise), self.found)             # and its median cost again
+        self.assertIn(("TTFT p95", "precise-active-spec", "prefix-active"), self.found)
+        # speculative indexing: a small gain that did not hold in every run; the README says seven of eight
+        pair = frozenset(("precise-active", "precise-active-spec"))
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs) if frozenset((p.a, p.b)) == pair}
+        for metric in ("TTFT p50", "TTFT p95", "Prefix-cache hit rate", "RAG TTFT p95"):
+            self.assertEqual(wins[metric]["precise-active-spec"], 7, metric)
+        self.assertEqual(wins["TTFT p99"]["precise-active-spec"], 4)
+        self.assertEqual({f[0] for f in self.found if {f[1], f[2]} == set(pair)}, set())
+        p50 = {m: sorted(r["summary"]["ttft_ms"]["p50"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        medians = {m: sum(v) / 2 for m, v in p50.items()}
+        self.assertLess(medians["precise-active-spec"], medians["precise-active"])
+        self.assertLess(medians["prefix-active"] + 4, medians["precise-active-spec"])      # the round trip still shows
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
