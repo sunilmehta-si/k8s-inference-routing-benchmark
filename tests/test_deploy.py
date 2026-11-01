@@ -307,6 +307,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('scripts/deploy-servers.sh "$REPLICAS"', steps)                  # the pod count is a dispatch input
         self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["replicas"]["default"], "4")
         self.assertEqual(run["env"]["REPLICAS"], "${{ inputs.replicas || '4' }}")
+        # the comparison artifact's result files carry the run they came from, so a dataset is a copy, not an edit
+        report = flow["jobs"]["report"]["steps"]
+        compare = next(st for st in report if st.get("name") == "Compare the routers")["run"]
+        self.assertIn('{run_url: $url}', compare)
+        self.assertIn('$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID', compare)
+        self.assertLess(compare.index("run_url"), compare.index("irb report"))
         # the render server's CPU is an input too, and a result records it so runs with different values never mix
         self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["render_cpu"]["default"], "500m")
         self.assertEqual(run["env"]["RENDER_CPU"], "${{ inputs.render_cpu || '500m' }}")

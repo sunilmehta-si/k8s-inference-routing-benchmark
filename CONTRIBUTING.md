@@ -34,7 +34,7 @@ Traces are not committed; the fingerprint is what makes a run reproducible.
 
 Dispatch the `cluster` workflow with the routers, repeats, workload and pod count you want; eight repeats of six
 routers take about 35 minutes. A push never cancels a dispatched run. Download the `comparison` artifact, copy the
-`*-rN.json` files into a new `results/<name>/`, set `run_url` on each (`inference_routing_bench.results.load`/`save`),
+`*-rN.json` files into a new `results/<name>/` (the workflow has already set `run_url` on each),
 and generate its `README.md` and `chart.svg` with `irb report` and `irb chart`. If the repeats came from more than one
 dispatch of the same commit, set `CI_RUNS` on the class to how many. Add a `_OneRunDataset` subclass in
 `tests/test_committed_results.py`: it checks the runs are clean, from one CI run, and regenerate the report exactly.

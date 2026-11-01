@@ -137,6 +137,11 @@ jobs:
           shopt -s nullglob
           runs=()
           for mode in $(jq -r '.[]' <<<"$MODES"); do runs+=(out/"$mode"-r*.json); done
+          # Each result names the run it came from, so the files can be committed as a dataset as they are: a
+          # dataset's test requires run_url, and the README links it.
+          for f in "${runs[@]}"; do
+            jq --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" '. + {run_url: $url}' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
           irb report "${runs[@]}" -o out/README.md
           irb chart "${runs[@]}" --title "Routing on a kind cluster: $(jq -r '.cluster.model_server.replicas' "${runs[0]}") simulated vLLM pods, same trace" -o out/chart.svg
           cat out/README.md >> "$GITHUB_STEP_SUMMARY"
