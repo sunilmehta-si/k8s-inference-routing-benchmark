@@ -327,6 +327,36 @@ class PreciseP2ResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertLess(abs(sum(hits["precise-active-p2"]) - sum(hits["prefix-active-p2"])) / 2, 0.01)       # within a point
 
 
+class PreciseEightPodResultsTests(_OneRunDataset, unittest.TestCase):
+    """The real cache picture on eight pods: does its gain grow with the pool like the pile-up did, and does
+    speculative indexing still help when a burst has eight pods to land on?"""
+    DIR, REPORT_TITLE, PODS = "precise-eight-pods", "precise-eight-pods (chat-rag-mix)", 8
+    MODES_HERE = ("round-robin", "prefix-active", "precise-active", "precise-active-spec", "prefix-active-p2", "precise-active-p2")
+    TITLE = "The real cache picture on eight pods: chat-rag-mix, 1,672 requests"
+
+    def test_what_the_readme_says_about_eight_pods_with_the_precise_index(self):
+        wins = {(p.metric, frozenset((p.a, p.b))): {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)}
+        # weight 1: the precise index wins the tail and the hits in every run, the approximate router the median in seven
+        for metric in ("TTFT p95", "TTFT p99", "Goodput", "Prefix-cache hit rate"):
+            self.assertIn((metric, "precise-active", "prefix-active"), self.found)
+        self.assertEqual(wins[("TTFT p50", frozenset(("precise-active", "prefix-active")))]["prefix-active"], 7)
+        # weight 2: the approximate router keeps more hits and the better median and p95 in every run, the precise one
+        # spreads the pile-up (balance 0.68 against 0.52) and holds goodput; p99 went its way in six
+        for metric in ("Prefix-cache hit rate", "TTFT p50", "TTFT p95", "RAG TTFT p95"):
+            self.assertIn((metric, "prefix-active-p2", "precise-active-p2"), self.found)
+        for metric in ("Load balance", "Goodput"):
+            self.assertIn((metric, "precise-active-p2", "prefix-active-p2"), self.found)
+        self.assertEqual(wins[("TTFT p99", frozenset(("precise-active-p2", "prefix-active-p2")))]["precise-active-p2"], 6)
+        # speculative indexing turns against itself on eight pods: fewer hits and a worse spread in every run
+        for metric in ("Prefix-cache hit rate", "Load balance"):
+            self.assertIn((metric, "precise-active", "precise-active-spec"), self.found)
+        self.assertEqual(wins[("TTFT p95", frozenset(("precise-active", "precise-active-spec")))]["precise-active"], 7)
+        balance = {m: sorted(r["pods"]["balance"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertLess(sum(balance["prefix-active-p2"]) / 2, 0.55)
+        self.assertGreater(sum(balance["precise-active-p2"]) / 2, 0.65)
+        self.assertGreater(sum(balance["precise-active"]) / 2, sum(balance["precise-active-spec"]) / 2 + 0.05)
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
