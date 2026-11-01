@@ -308,6 +308,25 @@ class PreciseSpecResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertLess(medians["prefix-active"] + 4, medians["precise-active-spec"])      # the round trip still shows
 
 
+class PreciseP2ResultsTests(_OneRunDataset, unittest.TestCase):
+    """The best approximate router, prefix at weight 2, with the real cache picture: does the gain survive when the
+    prefix score already dominates?"""
+    DIR, REPORT_TITLE = "precise-p2", "precise-p2 (chat-rag-mix)"
+    MODES_HERE = ("prefix-active-p2", "precise-active-p2")
+    TITLE = "The best approximate router with the real cache picture: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_what_the_readme_says_about_the_precise_index_at_prefix_weight_two(self):
+        for metric in ("TTFT p99", "Goodput"):
+            self.assertIn((metric, "precise-active-p2", "prefix-active-p2"), self.found)
+        self.assertIn(("TTFT p50", "prefix-active-p2", "precise-active-p2"), self.found)
+        # the hits gain is gone: at weight 2 both pickers already keep a document on one pod
+        wins = {p.metric: {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)}
+        self.assertEqual(wins["Prefix-cache hit rate"]["prefix-active-p2"], 7)
+        self.assertEqual({f[0] for f in self.found} & {"Prefix-cache hit rate", "TTFT p95", "Load balance"}, set())
+        hits = {m: sorted(r["pods"]["prefix_cache_hit_rate"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertLess(abs(sum(hits["precise-active-p2"]) - sum(hits["prefix-active-p2"])) / 2, 0.01)       # within a point
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
