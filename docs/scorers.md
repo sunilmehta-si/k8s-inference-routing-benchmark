@@ -101,6 +101,13 @@ and the RAG p95 in seven of eight runs and even on p99: the gap the event leaves
 rate. The median still trails `prefix-active` in every run (78 against 72 ms), so the remaining cost is the tokenizer
 round trip, which no indexing setting removes.
 
+At prefix weight 2 ([results](../results/precise-p2/README.md)) the hits gain vanishes: `prefix-active-p2` and
+`precise-active-p2` sit within half a point, the approximate router ahead in seven of eight runs. With the prefix score
+worth twice the load score, a pod that holds a document outscores an idle one whichever producer says so, and the
+estimate's stale entries change nothing; the index's advantage is in catching the prompts a strong load scorer would
+otherwise move to a pod that does not hold them. The tail still improved in every run (p99 658 to 615 ms, goodput 99.7
+to 100%), the median still paid the tokenizer round trip.
+
 ## Weights around prefix-active
 
 [Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the

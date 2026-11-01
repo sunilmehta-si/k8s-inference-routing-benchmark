@@ -7,6 +7,8 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 ### Added
 - Eight runs of `precise-active-spec` beside `precise-active` and `prefix-active` in `results/precise-spec/`: speculative
   indexing is a small gain in seven of eight runs; the median cost that remains is the tokenizer round trip.
+- `precise-active-p2`, the best approximate router with the precise producer, and eight runs of the pair in
+  `results/precise-p2/`: no hits gain at prefix weight 2, a better tail in every run, the median cost again.
 
 ## [0.4.0] - 2026-10-31
 

@@ -350,6 +350,16 @@ for two seconds. Eight runs beside `precise-active` and `prefix-active`
 routers again beat `prefix-active` on p99, goodput, hits and the RAG p95 in every run. The median gap to
 `prefix-active` (72 ms) narrows but stays in every run: what is left is the tokenizer round trip, not the index's lag.
 
+**At prefix weight 2 the hits gain disappears.** `precise-active-p2` is `prefix-active-p2`, the best approximate
+router, with the real picture. Eight runs
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41291704692),
+[full results](results/precise-p2/README.md)): the approximate router had more cache hits in seven of eight runs,
+and the medians sit within half a point (83.5% against 83.0%). With the prefix score weighted twice the load score,
+both pickers already keep a document on one pod, so the estimate's forgetting costs nothing. The real picture still
+bought the tail, p99 (615 against 658 ms) and goodput better in every run, and again lost the median in every run
+(85 against 75 ms): the tokenizer round trip. So the index pays where the load scorer is strong enough to pull prompts
+away from the pod that holds them, which is where an estimate goes stale.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -435,6 +445,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | A control trace where almost nothing repeats (`one-off-heavy`) | Done: the rescaled routers still beat round-robin and load-aware on every latency, eight runs |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Done: two to three more points of cache hits and a better tail in every pair, for a tokenizer round trip at the median; eight runs |
 | Speculative indexing on the precise index | Done: a small gain in seven of eight runs; the remaining median cost is the tokenizer round trip |
+| The real cache picture on the best approximate router (`prefix-active-p2`) | Done: no hits gain at prefix weight 2, a better tail in every run, the median cost again; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
