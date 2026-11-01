@@ -45,10 +45,22 @@ gets its own `results/` directory.
 
 ## State a result
 
+Download the run's `comparison` artifact and let `irb dataset` turn it into `results/<name>/`:
+
+```bash
+irb dataset precise-p2 --from ~/Downloads/comparison --modes prefix-active-p2,precise-active-p2 \
+  --title "The best approximate router with the real cache picture: 4 simulated vLLM pods, 1,672 requests"
+```
+
+It copies each router's eight `*-rN.json` files in the stated order (the column order of the report and the mode order
+the dataset test will use), refuses a router with the wrong number of runs, a file holding another router's run, or
+runs that are not comparable, and writes `README.md` and `chart.svg` exactly as the tests regenerate them. The workflow
+stamps `run_url` into each result; pass `--run-url` for an artifact from before it did. Then add a `_OneRunDataset`
+subclass in `tests/test_committed_results.py` with the same mode order and titles, and a test for every sentence the
+README will say about the runs.
+
 Print `irb compare` for the pairs you want to talk about before writing a word. The README states a difference only
-when it held in every run both routers had; "in seven of eight" is said as such. Every claim gets an assertion in the
-dataset's test class against `held()` or `pairs()`, so a claim that stops holding fails CI. A superlative across
-datasets ("most of any router") is a lead to test in one run, not a result.
+when it held in every run; say "seven of eight" when it did not.
 
 ## Bump a pinned release
 
