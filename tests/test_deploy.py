@@ -31,7 +31,7 @@ NON_PROFILE_PLUGINS = {"single-profile-handler", "token-producer", "endpoint-not
 # Modes that are the approximate prefix router of the same name with the picker's estimate replaced by the pods'
 # real cache contents, read from their KV-cache events.
 PRECISE_COUNTERPARTS = {"precise-aware": "prefix-aware", "precise-active": "prefix-active",
-                        "precise-queue": "prefix-queue"}
+                        "precise-queue": "prefix-queue", "precise-active-p2": "prefix-active-p2"}
 
 
 def versions() -> dict[str, str]:
@@ -162,7 +162,8 @@ class RouterConfigTests(unittest.TestCase):
                                    "precise-aware": ["prefix-cache-scorer"],
                                    "precise-active": ["active-request-scorer", "prefix-cache-scorer"],
                                    "precise-queue": ["prefix-cache-scorer", "queue-scorer"],
-                                   "precise-active-spec": ["active-request-scorer", "prefix-cache-scorer"]})
+                                   "precise-active-spec": ["active-request-scorer", "prefix-cache-scorer"],
+                                   "precise-active-p2": ["active-request-scorer", "prefix-cache-scorer"]})
 
     def test_each_precise_mode_is_its_counterpart_with_the_real_cache_index(self):
         def config(mode):
