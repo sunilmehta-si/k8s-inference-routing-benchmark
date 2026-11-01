@@ -85,6 +85,8 @@ class MarkdownTests(unittest.TestCase):
         self.assertIn("major behind; published 2026-10-01, adoptable |", text)
         self.assertIn("| v1.0.0 | v1.0.0 | current |", text)
         self.assertIn("ROUTER_VERSION, ROUTER_COMMIT and EPP_IMAGE are one bump", text)
+        self.assertIn("Not compared: KIND_NODE_IMAGE (chosen from the kind release's notes", text)
+        self.assertIn("PYTHON_IMAGE (CPython publishes tags", text)
 
 
 class CliTests(unittest.TestCase):

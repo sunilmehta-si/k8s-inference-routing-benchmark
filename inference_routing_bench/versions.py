@@ -152,7 +152,8 @@ def markdown(rows: list[Row], today: date) -> str:
         lines.append(f"| {r.name} ([{r.repo}](https://github.com/{r.repo}/releases)) | {r.pinned} | {r.latest.tag} | {status} |")
     lines += ["", f"Releases are adopted once they are {MIN_RELEASE_AGE_DAYS} days old, so a broken or withdrawn release "
                   "has time to come to light first. The router's chart and endpoint-picker image move together: "
-                  "ROUTER_VERSION, ROUTER_COMMIT and EPP_IMAGE are one bump.", ""]
+                  "ROUTER_VERSION, ROUTER_COMMIT and EPP_IMAGE are one bump."]
+    lines += ["", "Not compared: " + "; ".join(f"{name} ({why})" for name, why in NOT_COMPARED.items()) + ".", ""]
     return "\n".join(lines)
 
 
