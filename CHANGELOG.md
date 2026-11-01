@@ -11,6 +11,11 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   `results/precise-p2/`: no hits gain at prefix weight 2, a better tail in every run, the median cost again.
 - Eight runs of six routers on eight pods in `results/precise-eight-pods/`: the weight-1 gain holds; at weight 2 the
   precise index spreads the approximate router's pile-up instead of adding hits; speculative indexing hurts.
+- `irb dataset`: a committed `results/<name>/` from a run's comparison artifact, in a stated router order, refusing a
+  router with the wrong number of runs, a file holding another router's run or runs that are not comparable.
+- The cluster workflow stamps each result with its run URL before the report, and takes a `render_cpu` input (default
+  500m); a result records the render server's CPU, so runs with different values are refused side by side.
+- The README indexes every committed dataset with its question and router count, and a test holds the list.
 
 ## [0.4.0] - 2026-10-31
 
