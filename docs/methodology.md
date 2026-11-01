@@ -63,6 +63,11 @@ Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-infer
   live sessions) is about twice one pod's cache and fits in all four together, the regime where routing decides the
   hit rate. A larger cache relative to the traffic would make every router look the same; a smaller one, none.
 
+The render server that tokenizes for the pods is also where the `precise-*` routers tokenize every prompt before
+routing it, so its CPU request is part of what they cost. It is 500m in every committed dataset; the cluster workflow's
+`render_cpu` input changes it, and a result records the value under `cluster.model_server.render_cpu`, so runs with
+different values are refused side by side like any other server difference.
+
 ### Pool size
 
 Four pods is the default: enough for a prefix router to concentrate work on a few and for the spread to show, few

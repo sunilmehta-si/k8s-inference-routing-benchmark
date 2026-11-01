@@ -39,6 +39,10 @@ and generate its `README.md` and `chart.svg` with `irb report` and `irb chart`. 
 dispatch of the same commit, set `CI_RUNS` on the class to how many. Add a `_OneRunDataset` subclass in
 `tests/test_committed_results.py`: it checks the runs are clean, from one CI run, and regenerate the report exactly.
 
+Besides `modes`, `repeats` and `replicas`, a dispatch takes `render_cpu`, the CPU request of the render server the
+precise routers tokenize on (default 500m). A dataset from a different value is a different server configuration and
+gets its own `results/` directory.
+
 ## State a result
 
 Print `irb compare` for the pairs you want to talk about before writing a word. The README states a difference only
