@@ -79,6 +79,17 @@ class CommittedResultsTests(unittest.TestCase):
 
 
 
+class DatasetIndexTests(unittest.TestCase):
+    def test_the_readme_lists_every_committed_dataset_with_its_router_count(self):
+        readme = (ROOT / "README.md").read_text()
+        for d in sorted(p for p in (ROOT / "results").iterdir() if p.is_dir()):
+            routers = len({f.name.rsplit("-r", 1)[0] for f in d.glob("*-r*.json")})
+            with self.subTest(dataset=d.name):
+                self.assertIn(f"| [{d.name}](results/{d.name}/README.md) | ", readme)
+                row = next(l for l in readme.splitlines() if l.startswith(f"| [{d.name}]("))
+                self.assertTrue(row.endswith(f"| {routers} |"), row)
+
+
 class _OneRunDataset:
     """A dataset from one CI run: eight clean repeats of each router, a report and chart that regenerate exactly."""
     DIR = MODES_HERE = TITLE = REPORT_TITLE = None

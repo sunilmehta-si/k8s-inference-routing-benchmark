@@ -70,6 +70,23 @@ CI ([run 1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/act
 
 ![TTFT, prefix-cache hits and load balance per router, median of eight runs](results/chat-rag-mix/chart.svg)
 
+Every dataset below is eight runs per router, each on its own cluster, with its claims tested against the runs:
+
+| Dataset | Question | Routers |
+|---|---|---|
+| [chat-rag-mix](results/chat-rag-mix/README.md) | Does the router matter at all? | 4 |
+| [load-weight](results/load-weight/README.md) | Does weighting load higher fix the pile-up? | 5 |
+| [queue-threshold](results/queue-threshold/README.md) | Does a lower queue threshold let load count? | 3 |
+| [scorers](results/scorers/README.md) | Do the router's other load scorers spread the work? | 6 |
+| [active-weights](results/active-weights/README.md) | What does each weight buy prefix-active? | 3 |
+| [head-to-head](results/head-to-head/README.md) | The two best routers in the same run | 4 |
+| [eight-pods](results/eight-pods/README.md) | Does the pile-up grow with the pool? | 6 |
+| [one-off-heavy](results/one-off-heavy/README.md) | The control: what survives when nothing repeats? | 6 |
+| [precise](results/precise/README.md) | Does the real cache picture beat the estimate? | 6 |
+| [precise-spec](results/precise-spec/README.md) | Does speculative indexing win back the median? | 3 |
+| [precise-p2](results/precise-p2/README.md) | Does the real picture help the best approximate router? | 2 |
+| [precise-eight-pods](results/precise-eight-pods/README.md) | The real picture on eight pods | 6 |
+
 Each cell is the median of the eight runs, with the lowest and highest in brackets.
 
 | Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput (TTFT < 1 s) |
