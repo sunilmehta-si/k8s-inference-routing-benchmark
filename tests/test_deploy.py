@@ -90,7 +90,8 @@ class ModelServerTests(unittest.TestCase):
         # kube-system on a kind node asks for about a CPU; everything the benchmark adds must fit in the other three
         def millicores(value):
             return int(value[:-1]) if value.endswith("m") else int(float(value) * 1000)
-        docs = [d for d in yaml.safe_load_all((ROOT / "deploy/model-servers.yaml").read_text()) if d and d.get("kind") == "Deployment"]
+        text = (ROOT / "deploy/model-servers.yaml").read_text().replace("${RENDER_CPU}", "500m")   # the script's default
+        docs = [d for d in yaml.safe_load_all(text) if d and d.get("kind") == "Deployment"]
         requests = {d["metadata"]["name"]: millicores(d["spec"]["template"]["spec"]["containers"][0]["resources"]["requests"]["cpu"])
                     for d in docs}
         router = yaml.safe_load((ROOT / "deploy/router/common.yaml").read_text())["router"]
@@ -306,6 +307,14 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('scripts/deploy-servers.sh "$REPLICAS"', steps)                  # the pod count is a dispatch input
         self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["replicas"]["default"], "4")
         self.assertEqual(run["env"]["REPLICAS"], "${{ inputs.replicas || '4' }}")
+        # the render server's CPU is an input too, and a result records it so runs with different values never mix
+        self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["render_cpu"]["default"], "500m")
+        self.assertEqual(run["env"]["RENDER_CPU"], "${{ inputs.render_cpu || '500m' }}")
+        deploy = (ROOT / "scripts/deploy-servers.sh").read_text()
+        self.assertIn('export RENDER_CPU="${RENDER_CPU:-500m}"', deploy)
+        self.assertIn("${RENDER_CPU}", deploy.split("envsubst", 1)[1].split("\n", 1)[0])
+        self.assertIn('"render_cpu": os.environ.get("RENDER_CPU", "500m")', (ROOT / "scripts/run.sh").read_text())
+        self.assertIn("cpu: ${RENDER_CPU}", (ROOT / "deploy/model-servers.yaml").read_text())
         self.assertIn('scripts/run.sh "$MODE" "$WORKLOAD" out "$SPEEDUP" "$REPEAT"', steps)
         uploads = [s["with"]["name"] for s in run["steps"] if "upload-artifact" in s.get("uses", "")]
         self.assertEqual(uploads, ["result-${{ matrix.mode }}-r${{ matrix.repeat }}"])  # repeats don't overwrite each other

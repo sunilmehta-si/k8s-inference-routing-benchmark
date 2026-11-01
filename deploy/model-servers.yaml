@@ -91,8 +91,12 @@ spec:
           readinessProbe:
             httpGet: {path: /health, port: 8082}
             periodSeconds: 5
+          # The precise routers tokenize every prompt here before routing it, so the render server's CPU is part of
+          # what they cost; RENDER_CPU (default 500m) lets a run ask whether more of it shortens that round trip.
           resources:
-            requests: {cpu: 500m, memory: 1Gi}
+            requests:
+              cpu: ${RENDER_CPU}
+              memory: 1Gi
             limits: {memory: 4Gi}
           securityContext:
             allowPrivilegeEscalation: false

@@ -20,6 +20,9 @@ on:
       replicas:
         description: Simulated vLLM pods behind each router
         default: "4"
+      render_cpu:
+        description: CPU request of the render server the precise routers tokenize on
+        default: "500m"
       repeats:
         description: Runs per router, each on its own cluster (JSON list)
         default: "[1, 2, 3]"
@@ -62,6 +65,7 @@ jobs:
       WORKLOAD: ${{ inputs.workload || 'chat-rag-mix' }}
       SPEEDUP: ${{ inputs.speedup || '2' }}
       REPLICAS: ${{ inputs.replicas || '4' }}
+      RENDER_CPU: ${{ inputs.render_cpu || '500m' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

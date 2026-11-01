@@ -41,7 +41,8 @@ docs = yaml.safe_load_all(open("deploy/model-servers.yaml"))
 cfg = next(yaml.safe_load(d["data"]["config.yaml"]) for d in docs if d and d.get("kind") == "ConfigMap")
 print(json.dumps({"kind_node_image": os.environ["KIND_NODE_IMAGE"], "router": os.environ["ROUTER_VERSION"],
                   "model_server": {"image": os.environ["SIM_IMAGE"].split("@")[0], "replicas": int(sys.argv[1]),
-                                   "tokenizer": os.environ["MODEL"], "config": cfg}}))
+                                   "tokenizer": os.environ["MODEL"], "render_cpu": os.environ.get("RENDER_CPU", "500m"),
+                                   "config": cfg}}))
 PY
 )"
 
