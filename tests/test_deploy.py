@@ -99,6 +99,15 @@ class ModelServerTests(unittest.TestCase):
         proxy = millicores(router["proxy"]["resources"]["requests"]["cpu"])
         self.assertLessEqual(requests["render"] + 8 * requests["sim"] + epp + proxy, 3000)
 
+    def test_the_load_client_fails_fast_when_it_cannot_be_scheduled(self):
+        # render_cpu=1500m left the client Pending: 1500 + 4 x 100 + 500 + 250 + the client's 500 exceeded the runner's
+        # allocatable CPU, and sixteen jobs waited 45 minutes to say nothing. The script now gives it two minutes.
+        run = (ROOT / "scripts/run.sh").read_text()
+        self.assertIn('[ "$phase" != "Pending" ] && break', run)
+        self.assertIn('describe pods -l job-name="$job"', run)
+        self.assertIn("Allocated resources", run)
+        self.assertLess(run.index("did not start within two minutes"), run.index("Wait for the Job to finish"))
+
     def test_the_render_server_outlasts_the_simulators_idle_connections(self):
         render = next(d for d in self.docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "render")
         env = {e["name"]: e["value"] for e in render["spec"]["template"]["spec"]["containers"][0]["env"]}

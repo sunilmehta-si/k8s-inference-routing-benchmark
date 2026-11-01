@@ -84,6 +84,20 @@ spec:
           securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}}
 EOF
 
+# A client pod that cannot be scheduled (the render server, pods and router already hold the runner's CPU) would sit
+# Pending until the workflow's 45-minute timeout and say nothing. Give it two minutes to start, then fail with why.
+for _ in $(seq 1 24); do
+  phase="$(kubectl -n "$NS" get pods -l job-name="$job" -o jsonpath='{.items[0].status.phase}' 2>/dev/null)"
+  [ -n "$phase" ] && [ "$phase" != "Pending" ] && break
+  sleep 5
+done
+if [ "${phase:-Pending}" = "Pending" ]; then
+  echo "the load client did not start within two minutes:" >&2
+  kubectl -n "$NS" describe pods -l job-name="$job" | sed -n '/^Events:/,$p' >&2
+  kubectl describe node | sed -n '/^Allocated resources:/,/^Events:/p' >&2
+  exit 1
+fi
+
 # Wait for the Job to finish, then read its log: attaching to a pod that may already have finished loses output.
 for _ in $(seq 1 720); do
   state="$(kubectl -n "$NS" get job "$job" -o jsonpath='{.status.succeeded}{.status.failed}')"
