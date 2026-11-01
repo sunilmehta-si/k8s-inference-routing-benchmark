@@ -4,6 +4,10 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Eight runs of `precise-active-spec` beside `precise-active` and `prefix-active` in `results/precise-spec/`: speculative
+  indexing is a small gain in seven of eight runs; the median cost that remains is the tokenizer round trip.
+
 ## [0.4.0] - 2026-10-31
 
 The endpoint picker can now score with the pods' real cache contents instead of its own estimate, and the first

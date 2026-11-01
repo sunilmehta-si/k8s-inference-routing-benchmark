@@ -95,6 +95,12 @@ calls the render server for every prompt before the lookup, and `prefix-active` 
 runs (71 against 84 ms). The load balance did not change in any pair that held: the prefix score decides which pod a
 prompt points at, and the load scorer pulls as before.
 
+Speculative indexing ([results](../results/precise-spec/README.md)) credits the chosen pod with a prompt's blocks at
+once, for two seconds, instead of waiting for its event. It was better than plain `precise-active` on median, p95, hits
+and the RAG p95 in seven of eight runs and even on p99: the gap the event leaves is real but small at this request
+rate. The median still trails `prefix-active` in every run (78 against 72 ms), so the remaining cost is the tokenizer
+round trip, which no indexing setting removes.
+
 ## Weights around prefix-active
 
 [Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the
