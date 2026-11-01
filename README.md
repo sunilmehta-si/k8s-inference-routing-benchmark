@@ -360,6 +360,14 @@ bought the tail, p99 (615 against 658 ms) and goodput better in every run, and a
 (85 against 75 ms): the tokenizer round trip. So the index pays where the load scorer is strong enough to pull prompts
 away from the pod that holds them, which is where an estimate goes stale.
 
+**On eight pods** ([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41291707884),
+[full results](results/precise-eight-pods/README.md)) the picture holds and sharpens. At prefix weight 1
+`precise-active` beat `prefix-active` on p95, p99, goodput and cache hits in every run (hits 75.9% against 74.0%),
+and lost the median in seven. At weight 2 the approximate router kept more hits and the better median and p95 in every
+run, but its pile-up returned (balance 0.52) while `precise-active-p2` spread the work (0.68) and held goodput in every
+run. Speculative indexing turned against itself: with eight pods to land a burst on, crediting the chosen pod before
+its event arrived cost cache hits and spread in every run against plain `precise-active` (balance 0.85 against 0.92).
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -446,6 +454,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Done: two to three more points of cache hits and a better tail in every pair, for a tokenizer round trip at the median; eight runs |
 | Speculative indexing on the precise index | Done: a small gain in seven of eight runs; the remaining median cost is the tokenizer round trip |
 | The real cache picture on the best approximate router (`prefix-active-p2`) | Done: no hits gain at prefix weight 2, a better tail in every run, the median cost again; eight runs |
+| The real cache picture on eight pods | Done: the weight-1 gain holds; at weight 2 it spreads the pile-up instead; speculative indexing hurts; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects

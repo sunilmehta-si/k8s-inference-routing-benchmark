@@ -108,6 +108,14 @@ estimate's stale entries change nothing; the index's advantage is in catching th
 otherwise move to a pod that does not hold them. The tail still improved in every run (p99 658 to 615 ms, goodput 99.7
 to 100%), the median still paid the tokenizer round trip.
 
+On eight pods ([results](../results/precise-eight-pods/README.md)) the same shape holds at weight 1 (tail and hits to
+the index in every run, median to the estimate in seven). At weight 2 the estimate's pile-up comes back (balance 0.52,
+as in the eight-pod dataset) and the index spreads it (0.68) while the estimate keeps slightly more hits: a block the
+estimate still credits to a pod that evicted it keeps pulling prompts there, which is where the pile-up comes from, and
+the index stops crediting it. Speculative indexing hurt on eight pods: crediting the chosen pod before its event
+arrives is a self-fulfilling pile-up when a burst has more pods to spread over, and hits and balance both fell in every
+run.
+
 ## Weights around prefix-active
 
 [Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the

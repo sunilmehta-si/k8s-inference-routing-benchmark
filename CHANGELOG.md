@@ -9,6 +9,8 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   indexing is a small gain in seven of eight runs; the median cost that remains is the tokenizer round trip.
 - `precise-active-p2`, the best approximate router with the precise producer, and eight runs of the pair in
   `results/precise-p2/`: no hits gain at prefix weight 2, a better tail in every run, the median cost again.
+- Eight runs of six routers on eight pods in `results/precise-eight-pods/`: the weight-1 gain holds; at weight 2 the
+  precise index spreads the approximate router's pile-up instead of adding hits; speculative indexing hurts.
 
 ## [0.4.0] - 2026-10-31
 
