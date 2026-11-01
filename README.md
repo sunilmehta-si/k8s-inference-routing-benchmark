@@ -340,6 +340,16 @@ Medians:
 - **It does not change how evenly the work is spread.** No pair settled the load balance in every run; the index
   changes which pod a prompt's prefix points at, and the load scorer beside it pulls as before.
 
+**Speculative indexing** is the producer's answer to the one thing the estimate does better: knowing where a prompt
+went the moment it is routed. The precise index credits a pod only when its block-stored event arrives, so the second
+request of a burst can be routed into the gap; `precise-active-spec` also records the blocks against the chosen pod
+for two seconds. Eight runs beside `precise-active` and `prefix-active`
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41174172419),
+[full results](results/precise-spec/README.md)): it was better than `precise-active` on median TTFT (78 against
+83 ms), p95 (487 against 503), cache hits and the RAG p95 in seven of eight runs, even on p99, and both precise
+routers again beat `prefix-active` on p99, goodput, hits and the RAG p95 in every run. The median gap to
+`prefix-active` (72 ms) narrows but stays in every run: what is left is the tokenizer round trip, not the index's lag.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -424,6 +434,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | The same trace on eight pods | Done: the pile-up grows with the pool; `prefix-active` stays even, eight runs |
 | A control trace where almost nothing repeats (`one-off-heavy`) | Done: the rescaled routers still beat round-robin and load-aware on every latency, eight runs |
 | Precise prefix-cache scoring (the endpoint picker reading the pods' KV-cache events) | Done: two to three more points of cache hits and a better tail in every pair, for a tokenizer round trip at the median; eight runs |
+| Speculative indexing on the precise index | Done: a small gain in seven of eight runs; the remaining median cost is the tokenizer round trip |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
