@@ -56,6 +56,15 @@ def _parser() -> argparse.ArgumentParser:
                     help="Exit 1 when a newer release is old enough to adopt (releases younger than 14 days only warn).")
     vs.add_argument("--output", "-o", help="Write the Markdown table here instead of stdout.")
     vs.add_argument("--json", metavar="PATH", help="Also write the rows as JSON here.")
+    ds = sub.add_parser("dataset", help="Assemble a committed dataset from a cluster run's comparison artifact.")
+    ds.add_argument("name", help="Dataset name: results/<name>/ is written.")
+    ds.add_argument("--from", dest="source", required=True, help="Folder holding the artifact's <mode>-rN.json files.")
+    ds.add_argument("--modes", required=True, help="Routers in column order, comma-separated.")
+    ds.add_argument("--title", required=True, help="Chart title.")
+    ds.add_argument("--report-title", help="Report title (default: '<name> (<trace>)').")
+    ds.add_argument("--run-url", help="Set run_url on every result (for artifacts from before the workflow stamped it).")
+    ds.add_argument("--repeats", type=int, default=8, help="Runs each router must have (default 8).")
+    ds.add_argument("--results-dir", default="results", help="Where datasets live (default: results).")
     ch = sub.add_parser("chart", help="SVG of TTFT and prefix-cache hits per router.")
     ch.add_argument("results", nargs="+")
     ch.add_argument("--title", required=True)
@@ -160,6 +169,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "versions":
             return _cmd_versions(args)
+        if args.command == "dataset":
+            from .dataset import assemble
+            dest = Path(args.results_dir) / args.name
+            runs = assemble(Path(args.source), dest, args.modes.split(","), args.title, args.report_title, args.run_url, args.repeats)
+            print(f"irb: wrote {len(runs)} runs of {len(args.modes.split(','))} routers, README.md and chart.svg to {dest}", file=sys.stderr)
+            return 0
         if args.command == "chart":
             from .chart import svg
             from .results import load

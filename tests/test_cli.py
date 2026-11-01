@@ -140,3 +140,58 @@ class CliTests(unittest.TestCase):
         code, out, _ = quiet(["trace", "generate", str(ROOT / "workloads/smoke.yaml")])
         self.assertEqual(code, 0)
         self.assertGreater(len(out.splitlines()), 50)
+
+
+class DatasetCommandTests(unittest.TestCase):
+    """`irb dataset` assembles results/<name>/ from an artifact folder the way the dataset tests expect it."""
+    ROOT = Path(__file__).resolve().parents[1]
+
+    def artifact(self, folder: Path, modes=("prefix-active-p2", "precise-active-p2"), repeats=(1, 2)):
+        for mode in modes:
+            for r in repeats:
+                src = self.ROOT / "results/precise-p2" / f"{mode}-r{r}.json"
+                run = load(src)
+                run.pop("run_url", None)                      # an artifact from before the workflow stamped it
+                (folder / f"{mode}-r{r}.json").write_text(json.dumps(run))
+
+    def test_assembles_the_files_report_and_chart_in_the_stated_order(self):
+        from inference_routing_bench.chart import svg
+        from inference_routing_bench.report import markdown
+        with tempfile.TemporaryDirectory() as d:
+            src, results = Path(d) / "artifact", Path(d) / "results"
+            src.mkdir(); self.artifact(src)
+            err = io.StringIO()
+            with redirect_stderr(err):
+                code = main(["dataset", "pair", "--from", str(src), "--modes", "precise-active-p2,prefix-active-p2",
+                             "--title", "A pair", "--run-url", "https://example.test/runs/1", "--repeats", "2",
+                             "--results-dir", str(results)])
+            self.assertEqual(code, 0, err.getvalue())
+            dest = results / "pair"
+            files = sorted(p.name for p in dest.glob("*.json"))
+            self.assertEqual(files, ["precise-active-p2-r1.json", "precise-active-p2-r2.json",
+                                     "prefix-active-p2-r1.json", "prefix-active-p2-r2.json"])
+            runs = [load(dest / f"{m}-r{r}.json") for m in ("precise-active-p2", "prefix-active-p2") for r in (1, 2)]
+            self.assertEqual({r["run_url"] for r in runs}, {"https://example.test/runs/1"})
+            readme = (dest / "README.md").read_text()
+            self.assertEqual(readme, markdown(runs, "pair (chat-rag-mix)"))
+            self.assertLess(readme.index("precise-active-p2"), readme.index("prefix-active-p2"))     # the stated order
+            self.assertEqual((dest / "chart.svg").read_text(), svg(runs, "A pair"))
+
+    def test_refuses_a_short_router_a_wrong_file_and_a_missing_run_url(self):
+        with tempfile.TemporaryDirectory() as d:
+            src, results = Path(d) / "artifact", Path(d) / "results"
+            src.mkdir(); self.artifact(src)
+            def run(*extra):
+                err = io.StringIO()
+                with redirect_stderr(err):
+                    code = main(["dataset", "x", "--from", str(src), "--modes", "prefix-active-p2,precise-active-p2",
+                                 "--title", "t", "--results-dir", str(results), *extra])
+                return code, err.getvalue()
+            code, err = run("--repeats", "2")
+            self.assertEqual(code, 2); self.assertIn("no run_url", err)
+            code, err = run("--repeats", "8", "--run-url", "https://example.test/runs/1")
+            self.assertEqual(code, 2); self.assertIn("2 result files", err)
+            (src / "prefix-active-p2-r2.json").write_text((src / "precise-active-p2-r2.json").read_text())
+            code, err = run("--repeats", "2", "--run-url", "https://example.test/runs/1")
+            self.assertEqual(code, 2); self.assertIn("holds a run of 'precise-active-p2'", err)
+            self.assertFalse((results / "x").exists())                      # nothing written before the checks pass
