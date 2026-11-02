@@ -480,6 +480,46 @@ class SpeedupFourResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertTrue(all(r["summary"]["client"]["kept_up"] for r in self.runs))   # the client never fell behind
 
 
+class EightPodSpeedupThreeResultsTests(_OneRunDataset, unittest.TestCase):
+    """Eight pods at three times the rate: a larger pool absorbs the load the four-pod cluster could not, and the
+    routers' differences come back, sharper."""
+    DIR, REPORT_TITLE, PODS = "eight-pods-speedup-3", "eight-pods-speedup-3 (chat-rag-mix)", 8
+    MODES_HERE = ("round-robin", "prefix-active", "precise-active", "prefix-active-p2", "precise-active-p2")
+    TITLE = "Eight pods at three times the trace's rate: chat-rag-mix, 1,672 requests"
+
+    def test_the_client_sent_half_as_fast_again_as_the_two_times_datasets(self):
+        rate = lambda runs: sorted(r["summary"]["throughput"]["requests_per_s"] for r in runs)[len(runs) // 2]
+        base = [load(p) for p in (ROOT / "results/eight-pods").glob("round-robin-r*.json")]
+        self.assertAlmostEqual(rate(self.runs) / rate(base), 1.5, delta=0.08)
+
+    def test_what_the_readme_says_about_eight_pods_under_load(self):
+        # eight pods absorb the rate: the Service keeps 99.5% goodput here, where four pods gave it 90%
+        goodput = {m: sorted(r["summary"]["goodput"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertGreater(sum(goodput["round-robin"]) / 2, 0.99)
+        for router in self.MODES_HERE[1:]:
+            for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Prefix-cache hit rate"):
+                self.assertIn((metric, router, "round-robin"), self.found)
+        # prefix weight 2 buys hits, p95, p99 and every kind's p95 in every run, and costs spread in every run
+        for metric in ("TTFT p95", "TTFT p99", "Prefix-cache hit rate", "Chat TTFT p95", "RAG TTFT p95", "One-off TTFT p95"):
+            self.assertIn((metric, "prefix-active-p2", "prefix-active"), self.found)
+        self.assertIn(("Load balance", "prefix-active", "prefix-active-p2"), self.found)
+        # the real picture on the weight-2 router: best p99 and goodput of any router, and it spreads the pile-up, for
+        # fewer hits and a slower median, all in every run; the p95 between the two was not settled
+        for metric in ("TTFT p99", "Goodput", "Load balance"):
+            self.assertIn((metric, "precise-active-p2", "prefix-active-p2"), self.found)
+        for metric in ("TTFT p50", "Prefix-cache hit rate"):
+            self.assertIn((metric, "prefix-active-p2", "precise-active-p2"), self.found)
+        self.assertNotIn("TTFT p95", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active-p2", "precise-active-p2"}})
+        self.assertIn(("TTFT p99", "precise-active-p2", "precise-active"), self.found)
+        # at weight 1 the precise index keeps goodput and loses the median in every run; the p99 did not hold here
+        self.assertIn(("Goodput", "precise-active", "prefix-active"), self.found)
+        self.assertIn(("TTFT p50", "prefix-active", "precise-active"), self.found)
+        self.assertNotIn(("TTFT p99", "precise-active", "prefix-active"), self.found)
+        balance = {m: sorted(r["pods"]["balance"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertLess(sum(balance["prefix-active-p2"]) / 2, 0.66)
+        self.assertGreater(sum(balance["precise-active-p2"]) / 2, 0.69)
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
