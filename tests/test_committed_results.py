@@ -450,6 +450,36 @@ class SpeedupThreeResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertNotIn("TTFT p99", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active", "prefix-active-p2"}})
 
 
+class SpeedupFourResultsTests(_OneRunDataset, unittest.TestCase):
+    """The trace at four times its rate: the pods saturate, and the question is what survives of the routers' differences."""
+    DIR, REPORT_TITLE = "speedup-4", "speedup-4 (chat-rag-mix)"
+    MODES_HERE = ("round-robin", "prefix-active", "precise-active", "prefix-active-p2", "precise-active-p2")
+    TITLE = "Four times the trace's rate: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_the_client_sent_twice_as_fast_as_every_other_dataset(self):
+        rate = lambda runs: sorted(r["summary"]["throughput"]["requests_per_s"] for r in runs)[len(runs) // 2]
+        base = [load(p) for p in (ROOT / "results/chat-rag-mix").glob("round-robin-r*.json")]
+        self.assertAlmostEqual(rate(self.runs) / rate(base), 2.0, delta=0.12)
+
+    def test_what_the_readme_says_about_saturation(self):
+        # a router or not is what holds: every router beat the Service on every latency, goodput and hits in every
+        # run; among the routers two differences held, both precise-active over prefix-active-p2: the median and the RAG p95
+        routers = self.MODES_HERE[1:]
+        for router in routers:
+            for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Goodput", "Prefix-cache hit rate"):
+                self.assertIn((metric, router, "round-robin"), self.found)
+        self.assertEqual({f for f in self.found if f[1] in routers and f[2] in routers},
+                         {("RAG TTFT p95", "precise-active", "prefix-active-p2"), ("TTFT p50", "precise-active", "prefix-active-p2")})
+        med = lambda m, get: sorted(get(r) for r in self.runs if r["mode"] == m)[3:5]
+        rr_p50 = sum(med("round-robin", lambda r: r["summary"]["ttft_ms"]["p50"])) / 2
+        rr_goodput = sum(med("round-robin", lambda r: r["summary"]["goodput"])) / 2
+        self.assertGreater(rr_p50, 1000)                                             # the Service's median passes a second
+        self.assertLess(rr_goodput, 0.5)                                             # and half its requests miss the objective
+        for router in routers:
+            self.assertGreater(sum(med(router, lambda r: r["summary"]["goodput"])) / 2, 0.94)
+        self.assertTrue(all(r["summary"]["client"]["kept_up"] for r in self.runs))   # the client never fell behind
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"

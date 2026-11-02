@@ -93,6 +93,7 @@ Every dataset below is eight runs per router, each on its own cluster, with its 
 | [precise-control](results/precise-control/README.md) | The precise router when nothing repeats | 3 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41327295087) |
 | [render-cpu](results/render-cpu/README.md) | Is the precise router's median cost the tokenizer's CPU or the hop? | 2 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41329790292) |
 | [speedup-3](results/speedup-3/README.md) | What happens at three times the trace's rate? | 5 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41387543765) |
+| [speedup-4](results/speedup-4/README.md) | And at four times, when the pods saturate? | 5 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41388067230) |
 
 Each cell is the median of the eight runs, with the lowest and highest in brackets.
 

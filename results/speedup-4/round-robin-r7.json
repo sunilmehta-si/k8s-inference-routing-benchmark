@@ -1,0 +1,209 @@
+{
+  "by_kind": {
+    "chat": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 2191.7,
+        "p95": 5032.4
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.4758,
+      "ok": 227,
+      "requests": 227,
+      "server_cached_prompt_share": 0.6174,
+      "status_counts": {
+        "200": 227
+      },
+      "throughput": {
+        "output_tokens_per_s": 121.5,
+        "requests_per_s": 2.93
+      },
+      "tpot_ms": {
+        "p50": 25.4,
+        "p95": 28.6
+      },
+      "ttft_ms": {
+        "mean": 1353.2,
+        "p50": 1060.2,
+        "p90": 3140.8,
+        "p95": 3564.5,
+        "p99": 3923.8
+      },
+      "ttft_slo_ms": 1000
+    },
+    "rag": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 2239.8,
+        "p95": 4930.7
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.4293,
+      "ok": 1160,
+      "requests": 1160,
+      "server_cached_prompt_share": 0.7133,
+      "status_counts": {
+        "200": 1160
+      },
+      "throughput": {
+        "output_tokens_per_s": 559.2,
+        "requests_per_s": 14.51
+      },
+      "tpot_ms": {
+        "p50": 25.6,
+        "p95": 29.1
+      },
+      "ttft_ms": {
+        "mean": 1461.8,
+        "p50": 1241.0,
+        "p90": 3204.4,
+        "p95": 3634.6,
+        "p99": 4270.3
+      },
+      "ttft_slo_ms": 1000
+    },
+    "single": {
+      "client": {
+        "kept_up": true,
+        "lateness_p95_ms": 0.0
+      },
+      "e2e_ms": {
+        "p50": 2430.7,
+        "p95": 4952.8
+      },
+      "error_rate": 0.0,
+      "errors": 0,
+      "goodput": 0.3895,
+      "ok": 285,
+      "requests": 285,
+      "server_cached_prompt_share": 0.0165,
+      "status_counts": {
+        "200": 285
+      },
+      "throughput": {
+        "output_tokens_per_s": 137.6,
+        "requests_per_s": 3.6
+      },
+      "tpot_ms": {
+        "p50": 25.5,
+        "p95": 28.6
+      },
+      "ttft_ms": {
+        "mean": 1589.9,
+        "p50": 1428.9,
+        "p90": 3184.6,
+        "p95": 3607.9,
+        "p99": 4243.5
+      },
+      "ttft_slo_ms": 1000
+    }
+  },
+  "cluster": {
+    "kind_node_image": "kindest/node:v1.37.0",
+    "model_server": {
+      "config": {
+        "block-size": 16,
+        "enable-kvcache": true,
+        "engine": "vllm",
+        "hash-seed": "42",
+        "inter-token-latency": "12ms",
+        "inter-token-latency-std-dev": "2ms",
+        "kv-cache-size": 2048,
+        "latency-calculator": "per-token",
+        "max-model-len": 8192,
+        "max-num-seqs": 8,
+        "mode": "random",
+        "port": 8000,
+        "prefill-overhead": "30ms",
+        "prefill-time-per-token": "250us",
+        "prefill-time-std-dev": "5ms",
+        "time-factor-under-load": 2.0,
+        "zmq-endpoint": "tcp://*:5557"
+      },
+      "image": "ghcr.io/llm-d/llm-d-inference-sim:v1.0.0",
+      "render_cpu": "500m",
+      "replicas": 4,
+      "tokenizer": "Qwen/Qwen2.5-1.5B-Instruct"
+    },
+    "router": "v1.0.0"
+  },
+  "description": "Kubernetes Service: kube-proxy spreads connections over the pods, blind to load and prompt.",
+  "finished_at": "2026-11-02T04:35:36Z",
+  "mode": "round-robin",
+  "pods": {
+    "balance": 0.972,
+    "per_pod": {
+      "sim-6db9c4574c-58nhw": {
+        "prefix_cache_hit_rate": 0.6192,
+        "requests": 430
+      },
+      "sim-6db9c4574c-8z65j": {
+        "prefix_cache_hit_rate": 0.6657,
+        "requests": 430
+      },
+      "sim-6db9c4574c-dlq7l": {
+        "prefix_cache_hit_rate": 0.6193,
+        "requests": 419
+      },
+      "sim-6db9c4574c-pn9js": {
+        "prefix_cache_hit_rate": 0.6419,
+        "requests": 393
+      }
+    },
+    "pods": 4,
+    "prefix_cache_hit_rate": 0.6369,
+    "requests_served": 1672
+  },
+  "repeat": 7,
+  "run_url": "https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41388067230",
+  "schema": 1,
+  "summary": {
+    "client": {
+      "kept_up": true,
+      "lateness_p95_ms": 0.0
+    },
+    "e2e_ms": {
+      "p50": 2269.9,
+      "p95": 4965.5
+    },
+    "error_rate": 0.0,
+    "errors": 0,
+    "goodput": 0.4288,
+    "ok": 1672,
+    "requests": 1672,
+    "server_cached_prompt_share": 0.6369,
+    "status_counts": {
+      "200": 1672
+    },
+    "throughput": {
+      "output_tokens_per_s": 813.4,
+      "requests_per_s": 20.92
+    },
+    "tpot_ms": {
+      "p50": 25.5,
+      "p95": 28.9
+    },
+    "ttft_ms": {
+      "mean": 1468.9,
+      "p50": 1242.1,
+      "p90": 3197.5,
+      "p95": 3611.9,
+      "p99": 4194.9
+    },
+    "ttft_slo_ms": 1000
+  },
+  "tool_version": "0.5.0",
+  "trace": {
+    "fingerprint": "sha256:bc470acc83d6afbed70a27d05517c9ff855f93e97f455fda2752a1db0fc1fada",
+    "name": "chat-rag-mix",
+    "requests": 1672
+  }
+}
