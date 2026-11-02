@@ -416,6 +416,40 @@ class RenderCpuResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertTrue(9 <= gap <= 14, gap)                                         # 11 ms here, 13 ms at 500m: the hop, not the CPU
 
 
+class SpeedupThreeResultsTests(_OneRunDataset, unittest.TestCase):
+    """The same trace replayed at three times its rate instead of two: what happens to the gaps when the pods are busy."""
+    DIR, REPORT_TITLE = "speedup-3", "speedup-3 (chat-rag-mix)"
+    MODES_HERE = ("round-robin", "prefix-active", "precise-active", "prefix-active-p2", "precise-active-p2")
+    TITLE = "Three times the trace's rate: 4 simulated vLLM pods, 1,672 requests"
+
+    def test_the_client_sent_half_as_fast_again_as_every_other_dataset(self):
+        # results from before 0.6.0 do not record the speedup; the request rate the client achieved does
+        rate = lambda runs: sorted(r["summary"]["throughput"]["requests_per_s"] for r in runs)[len(runs) // 2]
+        base = [load(p) for p in (ROOT / "results/chat-rag-mix").glob("round-robin-r*.json")]
+        self.assertAlmostEqual(rate(self.runs) / rate(base), 1.5, delta=0.08)
+
+    def test_what_the_readme_says_about_three_times_the_rate(self):
+        wins = {(p.metric, frozenset((p.a, p.b))): {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)}
+        # the Service falls over first: every active router beat it on every latency and on goodput in every run
+        for router in ("prefix-active", "precise-active", "prefix-active-p2", "precise-active-p2"):
+            for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Goodput", "Prefix-cache hit rate"):
+                self.assertIn((metric, router, "round-robin"), self.found)
+        p50 = {m: sorted(r["summary"]["ttft_ms"]["p50"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        goodput = {m: sorted(r["summary"]["goodput"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertGreater(sum(p50["round-robin"]) / 2, 3 * sum(p50["prefix-active"]) / 2)          # 298 against 83 ms
+        self.assertLess(sum(goodput["round-robin"]) / 2, 0.92)
+        # the precise index keeps its tail and goodput in every run; the median goes to the estimate in seven, not eight
+        for metric in ("TTFT p99", "Goodput", "RAG TTFT p95"):
+            self.assertIn((metric, "precise-active", "prefix-active"), self.found)
+        self.assertEqual(wins[("TTFT p50", frozenset(("precise-active", "prefix-active")))]["prefix-active"], 7)
+        self.assertEqual(wins[("Prefix-cache hit rate", frozenset(("precise-active", "prefix-active")))]["precise-active"], 7)
+        # prefix weight 2 buys hits and the p95 in every run and costs spread in every run; the p99 is not settled
+        for metric in ("TTFT p95", "Prefix-cache hit rate", "Chat TTFT p95"):
+            self.assertIn((metric, "prefix-active-p2", "prefix-active"), self.found)
+        self.assertIn(("Load balance", "prefix-active", "prefix-active-p2"), self.found)
+        self.assertNotIn("TTFT p99", {f[0] for f in self.found if {f[1], f[2]} == {"prefix-active", "prefix-active-p2"}})
+
+
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
     """The control: a trace where almost nothing repeats. Which gains survive without a cache to find?"""
     DIR, REPORT_TITLE, TRACE = "one-off-heavy", None, "one-off-heavy"
