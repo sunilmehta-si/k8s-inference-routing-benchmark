@@ -426,6 +426,14 @@ times, about 17 a second ([run](https://github.com/sunilmehta-si/k8s-inference-r
 - **Prefix weight 2 trades spread for hits here too.** `prefix-active-p2` had more hits and the better p95 than
   `prefix-active` in every run and a worse load balance in every run; the p99 was not settled.
 
+**At four times the rate the pods saturate** ([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41388067230),
+[full results](results/speedup-4/README.md)): round-robin's median passes a second (1,096 ms) and 47% of its requests
+miss the objective, while every router keeps a median of 130 to 170 ms and 95 to 98% goodput and beat the Service on
+every latency, goodput and hits in every run. Among the routers two differences held in every run, both
+`precise-active` over `prefix-active-p2`: the median and the RAG p95. With queues this deep the run-to-run ranges are
+wider than everything else the earlier datasets found, so the ordering of the routers is a story about a loaded
+cluster, not a saturated one, and what survives saturation is having a router at all.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -531,6 +539,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | The real cache picture on eight pods | Done: the weight-1 gain holds; at weight 2 it spreads the pile-up instead; speculative indexing hurts; eight runs |
 | What the precise router's median cost is | Done: the hop, not the tokenizer's CPU (1000m changed nothing), and level medians on long prompts; eight runs each |
 | The same trace at three times its rate | Done: round-robin's median 3.6x prefix-active's and goodput 90%; the precise tail holds; eight runs |
+| And at four times, when the pods saturate | Done: the Service's median passes a second, goodput 47%; among the routers two differences hold; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects

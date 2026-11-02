@@ -7,6 +7,8 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 ### Added
 - `results/speedup-3/`: the trace at three times its rate. The Service's median is 3.6x `prefix-active`'s and a tenth
   of its requests miss the objective; the precise index keeps its tail and goodput in every run.
+- `results/speedup-4/`: the trace at four times its rate, where the pods saturate. The Service's median passes a
+  second and 47% of its requests miss the objective; among the routers two differences hold.
 - The weekly schedule runs six representative routers instead of all seventeen; a push still runs every router once.
 - The README's dataset index links every CI run a dataset came from, and a "What to use" section gives the four
   choices the datasets support.
