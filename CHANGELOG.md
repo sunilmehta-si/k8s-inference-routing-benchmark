@@ -4,6 +4,18 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- `results/speedup-3/`: the trace at three times its rate. The Service's median is 3.6x `prefix-active`'s and a tenth
+  of its requests miss the objective; the precise index keeps its tail and goodput in every run.
+- The weekly schedule runs six representative routers instead of all seventeen; a push still runs every router once.
+- The README's dataset index links every CI run a dataset came from, and a "What to use" section gives the four
+  choices the datasets support.
+- `irb versions` checks that the pinned kind node image, digest and all, is one the pinned kind release's notes list,
+  and lists the pins it does not compare with the reason.
+
+### Changed
+- Pull requests are reviewed with the code review tool at v0.9.0.
+
 ## [0.5.0] - 2026-11-02
 
 Six datasets, 160 cluster runs, that place the real cache picture: it pays where the load scorer is strong enough to

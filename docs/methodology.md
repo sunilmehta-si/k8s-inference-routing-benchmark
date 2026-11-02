@@ -49,6 +49,10 @@ trace already sent. A chat turn shares everything up to its previous question, b
 trace's history is written by the generator, not by the simulator, so that answer is new text to the server. Across
 the trace this is 86% of all prompt words: the ceiling for any router's prefix-cache hit rate, before evictions.
 
+The trace is replayed at twice its recorded rate unless a dataset says otherwise (`speedup-3` replays at three times,
+and a result records the speedup from 0.6.0 on). Results from different speedups are not comparable and `irb report`
+refuses them side by side once both record it.
+
 ## The model servers
 
 Four replicas of the [llm-d vLLM simulator](https://github.com/llm-d/llm-d-inference-sim) v1.0.0, configured in

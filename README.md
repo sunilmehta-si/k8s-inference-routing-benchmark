@@ -402,6 +402,29 @@ round trip is small next to prefilling a 400-to-1,500-word prompt. The precise r
 (606 against 650 ms) and goodput (100% against 99.5%) in every run with 3 to 4% cache hits for both, so part of its
 tail advantage is not the cache picture at all but how it scores when nothing matches.
 
+### What happens at three times the rate?
+
+Every dataset above replays the trace at twice its recorded rate, about 11 requests a second on four pods. At three
+times, about 17 a second ([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41387543765),
+[full results](results/speedup-3/README.md)), the Service falls over first and the routers' gaps change shape:
+
+| Router | TTFT p50 | TTFT p95 | TTFT p99 | Prefix-cache hits | Load balance | Goodput |
+|---|---|---|---|---|---|---|
+| round-robin | 298 ms | 1,394 ms | 1,916 ms | 64.1% | 0.95 | 90.0% |
+| prefix-active | **83 ms** | 581 ms | 816 ms | 80.5% | **0.96** | 99.6% |
+| precise-active | 93 ms | 566 ms | 742 ms | 81.0% | 0.96 | **100.0%** |
+| prefix-active-p2 | 85 ms | 559 ms | 836 ms | **83.1%** | 0.90 | 99.4% |
+| precise-active-p2 | 95 ms | **538 ms** | **718 ms** | 83.0% | 0.87 | **100.0%** |
+
+- **The router matters most when the pods are busy.** At twice the rate round-robin's median was 1.8x
+  `prefix-active`'s; at three times it is 3.6x (298 against 83 ms), its p95 passes a second and a tenth of its
+  requests miss the one-second objective. Every active router beat it on every latency and on goodput in every run.
+- **The precise index keeps its tail.** `precise-active` beat `prefix-active` on p99, goodput and the RAG p95 in
+  every run, as at twice the rate; the median went to the estimate in seven of eight runs rather than eight, so the
+  tokenizer round trip matters less as queueing grows.
+- **Prefix weight 2 trades spread for hits here too.** `prefix-active-p2` had more hits and the better p95 than
+  `prefix-active` in every run and a worse load balance in every run; the p99 was not settled.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -506,6 +529,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | The real cache picture on the best approximate router (`prefix-active-p2`) | Done: no hits gain at prefix weight 2, a better tail in every run, the median cost again; eight runs |
 | The real cache picture on eight pods | Done: the weight-1 gain holds; at weight 2 it spreads the pile-up instead; speculative indexing hurts; eight runs |
 | What the precise router's median cost is | Done: the hop, not the tokenizer's CPU (1000m changed nothing), and level medians on long prompts; eight runs each |
+| The same trace at three times its rate | Done: round-robin's median 3.6x prefix-active's and goodput 90%; the precise tail holds; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
