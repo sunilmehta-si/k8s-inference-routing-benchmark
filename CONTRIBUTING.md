@@ -41,7 +41,8 @@ dispatch of the same commit, set `CI_RUNS` on the class to how many. Add a `_One
 
 Besides `modes`, `repeats` and `replicas`, a dispatch takes `render_cpu`, the CPU request of the render server the
 precise routers tokenize on (default 500m). A dataset from a different value is a different server configuration and
-gets its own `results/` directory.
+gets its own `results/` directory, as does one from a different `speedup`: a result records the rate it was replayed
+at under `replay.speedup`, and `irb report` refuses results whose recorded rates differ.
 
 ## State a result
 
