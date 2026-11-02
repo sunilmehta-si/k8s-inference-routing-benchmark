@@ -51,3 +51,16 @@ class CompareTests(unittest.TestCase):
         other["trace"]["fingerprint"] = "sha256:" + "1" * 64
         with self.assertRaises(ResultsError):
             pairs([run("rr", 1, 120), other])
+
+
+class ReplayRateTests(unittest.TestCase):
+    def test_results_from_different_rates_are_not_comparable(self):
+        from inference_routing_bench.results import ResultsError, build, comparable
+        two = build("a", "t", "sha256:" + "0" * 64, [], None, speedup=2.0)
+        three = build("b", "t", "sha256:" + "0" * 64, [], None, speedup=3.0)
+        old = build("c", "t", "sha256:" + "0" * 64, [], None)                 # a result from before the field existed
+        self.assertEqual(two["replay"], {"speedup": 2.0})
+        self.assertEqual(old["replay"], {})
+        comparable([two, old])                                              # an unrecorded rate is not a known difference
+        with self.assertRaisesRegex(ResultsError, "different rates: 2.0x, 3.0x"):
+            comparable([two, three])

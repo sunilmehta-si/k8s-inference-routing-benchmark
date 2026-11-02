@@ -21,12 +21,15 @@ class ResultsError(ValueError):
 
 
 def build(mode: str, trace_name: str, trace_fingerprint: str, results: list[Result], pods: dict | None,
-          cluster: dict | None = None, ttft_slo_s: float = 1.0, description: str = "", repeat: int = 1) -> dict:
+          cluster: dict | None = None, ttft_slo_s: float = 1.0, description: str = "", repeat: int = 1,
+          speedup: float | None = None) -> dict:
     return {
         "schema": SCHEMA,
         "tool_version": __version__,
         "mode": mode,
         "repeat": repeat,
+        # how many times faster than the trace the client replayed: a different rate is a different experiment
+        "replay": {"speedup": speedup} if speedup is not None else {},
         "description": description,
         "finished_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "trace": {"name": trace_name, "fingerprint": trace_fingerprint, "requests": len(results)},
@@ -65,6 +68,9 @@ def comparable(runs: list[dict]) -> None:
     servers = {json.dumps(r.get("cluster", {}).get("model_server", {}), sort_keys=True) for r in runs}
     if len(servers) > 1:
         raise ResultsError("the results ran against differently configured model servers")
+    speedups = {r.get("replay", {}).get("speedup") for r in runs} - {None}     # results from before 0.6.0 record none
+    if len(speedups) > 1:
+        raise ResultsError("the results replayed the trace at different rates: " + ", ".join(f"{s}x" for s in sorted(speedups)))
     keys = [(r["mode"], r.get("repeat", 1)) for r in runs]
     if len(set(keys)) != len(keys):
         raise ResultsError("more than one result for the same router and repeat: " + ", ".join(f"{m}#{n}" for m, n in keys))

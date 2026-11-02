@@ -106,7 +106,7 @@ def _cmd_run(args) -> int:
         pods = cluster_view({name: delta(before.get(name, {}), after[name]) for name in after})
     cluster = json.loads(Path(args.cluster).read_text()) if args.cluster else None
     run = results.build(args.mode, Path(args.trace).stem, fingerprint(args.trace), measured, pods, cluster,
-                        args.ttft_slo_ms / 1000, args.description, args.repeat)
+                        args.ttft_slo_ms / 1000, args.description, args.repeat, speedup=args.speedup)
     results.save(run, args.output)
     if args.raw:
         Path(args.raw).write_text("".join(json.dumps(r.to_dict()) + "\n" for r in measured))
