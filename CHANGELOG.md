@@ -4,6 +4,15 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-02
+
+Three datasets under load, 120 cluster runs: the busier the pods, the more the router matters and the less the
+routers differ. At three times the trace's rate the Service's median is 3.6x the best router's; at four times it
+passes a second and half its requests miss the objective while every router stays under 170 ms, and the routers'
+differences stop holding; with eight pods the rate is absorbed and prefix weight 2 trades spread for hits and tail
+in every run. Results now record the rate they were replayed at, the versions report checks the kind node image
+against the kind release that built it, and the weekly schedule runs six representative routers.
+
 ### Added
 - `results/speedup-3/`: the trace at three times its rate. The Service's median is 3.6x `prefix-active`'s and a tenth
   of its requests miss the objective; the precise index keeps its tail and goodput in every run.
