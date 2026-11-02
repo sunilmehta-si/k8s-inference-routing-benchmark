@@ -4,6 +4,14 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-02
+
+Six datasets, 160 cluster runs, that place the real cache picture: it pays where the load scorer is strong enough to
+move prompts away from the pod that holds them (prefix weight 1), spreads the approximate router's pile-up at weight 2
+instead of adding hits, and keeps its tail advantage on eight pods and on a trace with nothing to cache. Its median
+cost is the extra hop to the tokenizer, not tokenizer CPU, and it disappears behind long prompts. Speculative indexing
+is a small gain on four pods and a loss on eight. `irb dataset` turns a run's artifact into a committed dataset.
+
 ### Added
 - Eight runs of `precise-active-spec` beside `precise-active` and `prefix-active` in `results/precise-spec/`: speculative
   indexing is a small gain in seven of eight runs; the median cost that remains is the tokenizer round trip.
