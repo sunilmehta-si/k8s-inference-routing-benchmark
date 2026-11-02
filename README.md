@@ -521,7 +521,8 @@ make cluster MODE=prefix-load-aware
 ```
 
 Every component the cluster runs is pinned in [`deploy/versions.env`](deploy/versions.env); `irb versions` says which
-pins have a newer release upstream and from when it is old enough to adopt. CI posts that table weekly.
+pins have a newer release upstream and from when it is old enough to adopt, lists the pins it does not compare and
+why, and checks that the kind node image is one the pinned kind release built. CI posts that table weekly.
 
 ## Status
 
