@@ -124,6 +124,15 @@ goodput were still better in every run there, with 3 to 4% cache hits for both r
 matches the two producers do not score alike: the approximate one still reports tiny matches from its record and nudges
 prompts toward a pod, the precise one reports none and leaves the choice to the in-flight count.
 
+Under load ([3x on four pods](../results/speedup-3/README.md), [4x](../results/speedup-4/README.md),
+[3x on eight pods](../results/eight-pods-speedup-3/README.md)) the scorers' gaps change shape. Queueing grows the
+load scorers' signal: the rescaled scorers pull harder as the busiest pod gets busier, which is why every active
+router beats the Service by more at a higher rate. The tokenizer round trip stays a fixed 10 ms while medians rise,
+so the precise index's median cost stops holding at 3x on four pods and the gaps among routers stop holding at 4x,
+when every pod has a queue whatever the router does. With eight pods the rate is absorbed and the weight-2 picture
+sharpens: the prefix score dominates the in-flight count, hits and tail go up, spread goes down, and the real cache
+picture on that router recovers some spread (0.71 against 0.64) and the best p99 of any router.
+
 ## Weights around prefix-active
 
 [Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the

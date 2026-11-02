@@ -9,6 +9,9 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   of its requests miss the objective; the precise index keeps its tail and goodput in every run.
 - `results/speedup-4/`: the trace at four times its rate, where the pods saturate. The Service's median passes a
   second and 47% of its requests miss the objective; among the routers two differences hold.
+- `results/eight-pods-speedup-3/`: eight pods at three times the rate. The pool absorbs the load; prefix weight 2 buys
+  hits and tail for spread in every run, and the real cache picture on that router has the best p99 and spreads its
+  pile-up.
 - The weekly schedule runs six representative routers instead of all seventeen; a push still runs every router once.
 - The README's dataset index links every CI run a dataset came from, and a "What to use" section gives the four
   choices the datasets support.
