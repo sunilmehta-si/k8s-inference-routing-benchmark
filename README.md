@@ -90,6 +90,8 @@ Every dataset below is eight runs per router, each on its own cluster, with its 
 | [precise-spec](results/precise-spec/README.md) | Does speculative indexing win back the median? | 3 |
 | [precise-p2](results/precise-p2/README.md) | Does the real picture help the best approximate router? | 2 |
 | [precise-eight-pods](results/precise-eight-pods/README.md) | The real picture on eight pods | 6 |
+| [precise-control](results/precise-control/README.md) | The precise router when nothing repeats | 3 |
+| [render-cpu](results/render-cpu/README.md) | Is the precise router's median cost the tokenizer's CPU or the hop? | 2 |
 
 Each cell is the median of the eight runs, with the lowest and highest in brackets.
 
@@ -389,6 +391,16 @@ run, but its pile-up returned (balance 0.52) while `precise-active-p2` spread th
 run. Speculative indexing turned against itself: with eight pods to land a burst on, crediting the chosen pod before
 its event arrived cost cache hits and spread in every run against plain `precise-active` (balance 0.85 against 0.92).
 
+**The cost is the hop, not the tokenizer's CPU, and it hides behind long prompts.** With the render server at
+1000m instead of 500m ([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41329790292),
+[full results](results/render-cpu/README.md)) the median gap between `precise-active` and `prefix-active` was 11 ms
+against 13 ms before, and every other difference held as at 500m. On the control trace, where nothing repeats
+([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41327295087),
+[full results](results/precise-control/README.md)), the two medians were level (347 against 345 ms): a tokenizer
+round trip is small next to prefilling a 400-to-1,500-word prompt. The precise router still had the better p99
+(606 against 650 ms) and goodput (100% against 99.5%) in every run with 3 to 4% cache hits for both, so part of its
+tail advantage is not the cache picture at all but how it scores when nothing matches.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -476,6 +488,7 @@ pins have a newer release upstream and from when it is old enough to adopt. CI p
 | Speculative indexing on the precise index | Done: a small gain in seven of eight runs; the remaining median cost is the tokenizer round trip |
 | The real cache picture on the best approximate router (`prefix-active-p2`) | Done: no hits gain at prefix weight 2, a better tail in every run, the median cost again; eight runs |
 | The real cache picture on eight pods | Done: the weight-1 gain holds; at weight 2 it spreads the pile-up instead; speculative indexing hurts; eight runs |
+| What the precise router's median cost is | Done: the hop, not the tokenizer's CPU (1000m changed nothing), and level medians on long prompts; eight runs each |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects

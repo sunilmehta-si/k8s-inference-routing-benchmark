@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="242" viewBox="0 0 900 242" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="15" font-weight="700" fill="#0f172a">The real cache picture when nothing repeats: one-off-heavy, 1,472 requests</text>
+<text x="150" y="50" fill="#475569">Time to first token (ms): p50 dark, p95 light</text>
+<text x="570" y="50" fill="#475569">Prefix-cache hits</text>
+<text x="750" y="50" fill="#475569">Load balance</text>
+<text x="16" y="84" fill="#0f172a">round-robin</text>
+<rect x="150" y="70" width="362.4" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="70" width="203.1" height="20" rx="3" fill="#2563eb"/>
+<line x1="492.8" y1="80" x2="530.0" y2="80" stroke="#1e3a8a" stroke-width="2"/>
+<text x="536.0" y="85" fill="#334155">366 / 654</text>
+<rect x="570" y="70" width="4.1" height="20" rx="3" fill="#059669"/>
+<text x="580.1" y="85" fill="#334155">3%</text>
+<rect x="750" y="70" width="113.5" height="20" rx="3" fill="#d97706"/>
+<text x="869.5" y="85" fill="#334155">0.95</text>
+<text x="16" y="128" fill="#0f172a">prefix-active</text>
+<rect x="150" y="114" width="302.0" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="114" width="191.3" height="20" rx="3" fill="#2563eb"/>
+<line x1="447.2" y1="124" x2="458.8" y2="124" stroke="#1e3a8a" stroke-width="2"/>
+<text x="464.8" y="129" fill="#334155">345 / 545</text>
+<rect x="570" y="114" width="4.8" height="20" rx="3" fill="#059669"/>
+<text x="580.8" y="129" fill="#334155">4%</text>
+<rect x="750" y="114" width="116.4" height="20" rx="3" fill="#d97706"/>
+<text x="872.4" y="129" fill="#334155">0.97</text>
+<text x="16" y="172" fill="#0f172a">precise-active</text>
+<rect x="150" y="158" width="300.8" height="20" rx="3" fill="#93c5fd"/>
+<rect x="150" y="158" width="192.6" height="20" rx="3" fill="#2563eb"/>
+<line x1="444.6" y1="168" x2="453.5" y2="168" stroke="#1e3a8a" stroke-width="2"/>
+<text x="459.5" y="173" fill="#334155">347 / 543</text>
+<rect x="570" y="158" width="4.9" height="20" rx="3" fill="#059669"/>
+<text x="580.9" y="173" fill="#334155">4%</text>
+<rect x="750" y="158" width="117.1" height="20" rx="3" fill="#d97706"/>
+<text x="873.1" y="173" fill="#334155">0.98</text>
+<text x="16" y="228" fill="#64748b">one-off-heavy, 1,472 requests, same trace for every router, median of 8 runs per router (whisker: p95 range)</text>
+</svg>

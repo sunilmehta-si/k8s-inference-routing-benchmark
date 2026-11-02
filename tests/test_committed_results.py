@@ -118,6 +118,10 @@ class _OneRunDataset:
                     self.assertEqual(r["pods"]["requests_served"], r["trace"]["requests"])
 
     PODS = 4
+    RENDER_CPU = "500m"      # the render server's CPU request; results from before the input record none, which meant 500m
+
+    def test_the_servers_are_the_ones_the_dataset_says(self):
+        self.assertEqual({r["cluster"]["model_server"].get("render_cpu", "500m") for r in self.runs}, {self.RENDER_CPU})
 
     def test_report_and_chart_regenerate_exactly(self):
         self.assertEqual((self.dir / "README.md").read_text(), markdown(self.runs, self.REPORT_TITLE))
@@ -366,6 +370,46 @@ class PreciseEightPodResultsTests(_OneRunDataset, unittest.TestCase):
         self.assertLess(sum(balance["prefix-active-p2"]) / 2, 0.55)
         self.assertGreater(sum(balance["precise-active-p2"]) / 2, 0.65)
         self.assertGreater(sum(balance["precise-active"]) / 2, sum(balance["precise-active-spec"]) / 2 + 0.05)
+
+
+class PreciseControlResultsTests(_OneRunDataset, unittest.TestCase):
+    """The precise router on the control trace: with nothing to cache, what does the tokenizer round trip cost, and
+    does anything else differ from the approximate router?"""
+    DIR, REPORT_TITLE, TRACE = "precise-control", "precise-control (one-off-heavy)", "one-off-heavy"
+    MODES_HERE = ("round-robin", "prefix-active", "precise-active")
+    TITLE = "The real cache picture when nothing repeats: one-off-heavy, 1,472 requests"
+
+    def test_what_the_readme_says_about_the_precise_router_on_the_control(self):
+        wins = {(p.metric, frozenset((p.a, p.b))): {p.a: p.a_better, p.b: p.b_better} for p in pairs(self.runs)}
+        pair = frozenset(("precise-active", "prefix-active"))
+        # the medians are level: the round trip hides behind a long prompt's prefill
+        self.assertEqual(wins[("TTFT p50", pair)]["precise-active"], 4)
+        p50 = {m: sorted(r["summary"]["ttft_ms"]["p50"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        self.assertLess(abs(sum(p50["precise-active"]) - sum(p50["prefix-active"])) / 2, 5)
+        # and the tail still went to the precise router in every run, with nothing to find in the cache
+        for metric in ("TTFT p99", "Goodput"):
+            self.assertIn((metric, "precise-active", "prefix-active"), self.found)
+        for metric in ("TTFT p50", "TTFT p95", "TTFT p99", "Goodput"):
+            self.assertIn((metric, "precise-active", "round-robin"), self.found)
+        hits = {m: sorted(r["pods"]["prefix_cache_hit_rate"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        for m, (lo, hi) in hits.items():
+            self.assertLess((lo + hi) / 2, 0.05, m)                                 # 3 to 4% everywhere
+
+
+class RenderCpuResultsTests(_OneRunDataset, unittest.TestCase):
+    """Is the precise router's median cost the tokenizer's CPU or the hop? The render server at 1000m instead of 500m."""
+    DIR, REPORT_TITLE, RENDER_CPU = "render-cpu", "render-cpu (chat-rag-mix)", "1000m"
+    MODES_HERE = ("prefix-active", "precise-active")
+    TITLE = "The render server at 1000m CPU: chat-rag-mix, 1,672 requests"
+
+    def test_what_the_readme_says_about_doubling_the_render_cpu(self):
+        # the same picture as at 500m: median to the estimate, tail and hits to the index, in every run
+        self.assertIn(("TTFT p50", "prefix-active", "precise-active"), self.found)
+        for metric in ("TTFT p95", "TTFT p99", "Goodput", "Prefix-cache hit rate", "RAG TTFT p95"):
+            self.assertIn((metric, "precise-active", "prefix-active"), self.found)
+        p50 = {m: sorted(r["summary"]["ttft_ms"]["p50"] for r in self.runs if r["mode"] == m)[3:5] for m in self.MODES_HERE}
+        gap = (sum(p50["precise-active"]) - sum(p50["prefix-active"])) / 2
+        self.assertTrue(9 <= gap <= 14, gap)                                         # 11 ms here, 13 ms at 500m: the hop, not the CPU
 
 
 class OneOffHeavyResultsTests(_OneRunDataset, unittest.TestCase):
