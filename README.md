@@ -405,6 +405,22 @@ Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
 
+## What to use
+
+What the fourteen datasets say, for someone choosing a router configuration today:
+
+- **Put a rescaled load scorer beside the prefix scorer.** `prefix-active` (prefix 1, `active-request-scorer` 1) beat
+  prefix-plus-`load-aware` on median, p95 and p99 in every run and spread the work as evenly as load-aware routing.
+  The router's `load-aware-scorer` cannot pull a request off a cached pod at any weight or threshold tried.
+- **Weight the prefix 2 when cache hits matter more than spread.** `prefix-active-p2` has the most hits and the best
+  p95 of any router on four pods; on eight pods its pile-up comes back (balance 0.52), so on a larger pool keep the
+  prefix at 1 or use the precise index, which spreads it.
+- **Use the precise prefix index when a load scorer sits beside it at weight 1.** It adds two to three points of hits
+  and a better tail in every run, costs a tokenizer round trip at the median (10 to 13 ms here, hidden behind long
+  prompts), and does not add hits at prefix weight 2. Leave speculative indexing off.
+- **The gain over a Service is the load scoring, not the cache.** On a trace where nothing repeats, the same routers
+  keep their whole latency advantage over round-robin and load-aware.
+
 ## How it works
 
 ```mermaid
