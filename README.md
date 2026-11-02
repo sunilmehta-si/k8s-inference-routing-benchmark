@@ -435,6 +435,15 @@ every latency, goodput and hits in every run. Among the routers two differences 
 wider than everything else the earlier datasets found, so the ordering of the routers is a story about a loaded
 cluster, not a saturated one, and what survives saturation is having a router at all.
 
+**Eight pods at three times the rate** ([run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41390706184),
+[full results](results/eight-pods-speedup-3/README.md)) absorb what four could not: round-robin keeps 99.5% goodput
+and a 129 ms median, and the routers' differences come back sharper than at twice the rate. Prefix weight 2 bought
+`prefix-active-p2` more hits (84.6% against 79.0%), a better p95 and p99 and a better p95 for every kind of traffic
+than `prefix-active` in every run, and cost it spread in every run (0.64 against 0.92). `precise-active-p2` had the
+best p99 (534 ms) and goodput (100%) of any router and spread that pile-up (0.71) in every run, for fewer hits and a
+slower median in every run; the p95 between the two was not settled. At weight 1 the precise index kept its goodput
+and lost the median in every run; its p99 gain did not hold with eight pods this busy.
+
 Claims above are directions that held in every run unless they say otherwise;
 [the methodology](docs/methodology.md#repeats) says how runs are repeated and judged. The
 [cluster workflow](.github/workflows/cluster.yml) reruns every router three times each week and on every code change.
@@ -547,6 +556,7 @@ why, and checks that the kind node image is one the pinned kind release built. C
 | What the precise router's median cost is | Done: the hop, not the tokenizer's CPU (1000m changed nothing), and level medians on long prompts; eight runs each |
 | The same trace at three times its rate | Done: round-robin's median 3.6x prefix-active's and goodput 90%; the precise tail holds; eight runs |
 | And at four times, when the pods saturate | Done: the Service's median passes a second, goodput 47%; among the routers two differences hold; eight runs |
+| Eight pods at three times the rate | Done: the pool absorbs the load; weight 2 buys hits and tail for spread, the real picture on it has the best tail and spreads the pile-up; eight runs |
 | Prefill/decode disaggregation, more replicas and traffic shapes | Planned |
 
 ## Related projects
