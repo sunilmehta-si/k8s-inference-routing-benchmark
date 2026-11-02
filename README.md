@@ -3,7 +3,7 @@
 [![ci](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/ci.yml) [![cluster](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml/badge.svg)](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/workflows/cluster.yml)
 
 **How much does the router in front of your LLM servers matter?** This project answers that with numbers. It replays
-the same chat and RAG traffic through twelve ways of spreading requests over vLLM pods on Kubernetes and measures what
+the same chat and RAG traffic through seventeen ways of spreading requests over vLLM pods on Kubernetes and measures what
 users feel (time to first token), what the cluster does (prefix-cache hits, load spread, throughput) and whether
 requests meet a latency objective. **No GPUs are needed**: the model servers are the
 [llm-d vLLM simulator](https://github.com/llm-d/llm-d-inference-sim), which models prefill, decode, load and a real
