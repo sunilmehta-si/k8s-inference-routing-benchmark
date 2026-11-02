@@ -16,6 +16,10 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 - The cluster workflow stamps each result with its run URL before the report, and takes a `render_cpu` input (default
   500m); a result records the render server's CPU, so runs with different values are refused side by side.
 - The README indexes every committed dataset with its question and router count, and a test holds the list.
+- `results/render-cpu/` (the render server at 1000m: the median cost is the hop, not tokenizer CPU) and
+  `results/precise-control/` (the precise router on the control trace: level medians, a better tail in every run).
+- The run script fails within two minutes when the load client cannot be scheduled, with the pod's events and the
+  node's allocated resources, instead of waiting out the workflow timeout.
 
 ## [0.4.0] - 2026-10-31
 

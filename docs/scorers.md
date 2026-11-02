@@ -116,6 +116,14 @@ the index stops crediting it. Speculative indexing hurt on eight pods: crediting
 arrives is a self-fulfilling pile-up when a burst has more pods to spread over, and hits and balance both fell in every
 run.
 
+Two more runs place the cost. Doubling the render server's CPU ([results](../results/render-cpu/README.md)) left the
+median gap at 11 ms against 13, so the round trip is the extra network hop and request handling, not tokenizer CPU.
+On the control trace ([results](../results/precise-control/README.md)) the medians were level: a 400-to-1,500-word
+prompt prefills for hundreds of milliseconds and a 10 ms hop before it disappears. The precise router's p99 and
+goodput were still better in every run there, with 3 to 4% cache hits for both routers, which says that when nothing
+matches the two producers do not score alike: the approximate one still reports tiny matches from its record and nudges
+prompts toward a pod, the precise one reports none and leaves the choice to the in-flight count.
+
 ## Weights around prefix-active
 
 [Eight runs each](../results/active-weights/README.md) of `prefix-active` with the prefix at weight 2, then the
