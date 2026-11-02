@@ -316,6 +316,14 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('scripts/deploy-servers.sh "$REPLICAS"', steps)                  # the pod count is a dispatch input
         self.assertEqual(flow[True]["workflow_dispatch"]["inputs"]["replicas"]["default"], "4")
         self.assertEqual(run["env"]["REPLICAS"], "${{ inputs.replicas || '4' }}")
+        # the weekly schedule runs a representative subset, the same one in the matrix and in the report, all from the full list
+        text = (ROOT / ".github/workflows/cluster.yml").read_text()
+        lists = {m for m in re.findall(r'\["round-robin"[^\]]*\]', text)}
+        full, weekly = max(lists, key=len), min(lists, key=len)
+        self.assertEqual(len(lists), 2)
+        self.assertTrue(set(json.loads(weekly)) < set(json.loads(full)))
+        self.assertTrue({"round-robin", "prefix-active", "precise-active", "router-default"} <= set(json.loads(weekly)))
+        self.assertEqual(text.count(f"github.event_name == 'schedule' && '{weekly}'"), 2)   # matrix and report agree
         # the comparison artifact's result files carry the run they came from, so a dataset is a copy, not an edit
         report = flow["jobs"]["report"]["steps"]
         compare = next(st for st in report if st.get("name") == "Compare the routers")["run"]
