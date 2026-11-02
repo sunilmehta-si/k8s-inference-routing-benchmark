@@ -440,7 +440,7 @@ Claims above are directions that held in every run unless they say otherwise;
 
 ## What to use
 
-What the fourteen datasets say, for someone choosing a router configuration today:
+What the sixteen datasets say, for someone choosing a router configuration today:
 
 - **Put a rescaled load scorer beside the prefix scorer.** `prefix-active` (prefix 1, `active-request-scorer` 1) beat
   prefix-plus-`load-aware` on median, p95 and p99 in every run and spread the work as evenly as load-aware routing.
@@ -453,6 +453,11 @@ What the fourteen datasets say, for someone choosing a router configuration toda
   prompts), and does not add hits at prefix weight 2. Leave speculative indexing off.
 - **The gain over a Service is the load scoring, not the cache.** On a trace where nothing repeats, the same routers
   keep their whole latency advantage over round-robin and load-aware.
+- **The busier the pods, the more the router matters, and the less the routers differ.** At twice the trace's rate
+  round-robin's median is 1.8x `prefix-active`'s; at three times 3.6x, with a tenth of its requests over the
+  objective; at four times it passes a second and half its requests miss, while every router stays under 170 ms.
+  Past three times the rate, differences among the routers stop holding; the choice among them is for a loaded
+  cluster, the choice to have one is for a saturated one.
 
 ## How it works
 
