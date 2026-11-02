@@ -87,7 +87,11 @@ class DatasetIndexTests(unittest.TestCase):
             with self.subTest(dataset=d.name):
                 self.assertIn(f"| [{d.name}](results/{d.name}/README.md) | ", readme)
                 row = next(l for l in readme.splitlines() if l.startswith(f"| [{d.name}]("))
-                self.assertTrue(row.endswith(f"| {routers} |"), row)
+                urls = sorted({load(f)["run_url"] for f in d.glob("*-r*.json")})
+                cells = [c.strip() for c in row.strip("|").split("|")]       # dataset, question, routers, runs
+                self.assertEqual(cells[2], str(routers), row)
+                for url in urls:                                          # every CI run the dataset came from is linked
+                    self.assertIn(f"]({url})", cells[3], row)
 
 
 class _OneRunDataset:

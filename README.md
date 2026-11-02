@@ -76,22 +76,22 @@ CI ([run 1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/act
 
 Every dataset below is eight runs per router, each on its own cluster, with its claims tested against the runs:
 
-| Dataset | Question | Routers |
-|---|---|---|
-| [chat-rag-mix](results/chat-rag-mix/README.md) | Does the router matter at all? | 4 |
-| [load-weight](results/load-weight/README.md) | Does weighting load higher fix the pile-up? | 5 |
-| [queue-threshold](results/queue-threshold/README.md) | Does a lower queue threshold let load count? | 3 |
-| [scorers](results/scorers/README.md) | Do the router's other load scorers spread the work? | 6 |
-| [active-weights](results/active-weights/README.md) | What does each weight buy prefix-active? | 3 |
-| [head-to-head](results/head-to-head/README.md) | The two best routers in the same run | 4 |
-| [eight-pods](results/eight-pods/README.md) | Does the pile-up grow with the pool? | 6 |
-| [one-off-heavy](results/one-off-heavy/README.md) | The control: what survives when nothing repeats? | 6 |
-| [precise](results/precise/README.md) | Does the real cache picture beat the estimate? | 6 |
-| [precise-spec](results/precise-spec/README.md) | Does speculative indexing win back the median? | 3 |
-| [precise-p2](results/precise-p2/README.md) | Does the real picture help the best approximate router? | 2 |
-| [precise-eight-pods](results/precise-eight-pods/README.md) | The real picture on eight pods | 6 |
-| [precise-control](results/precise-control/README.md) | The precise router when nothing repeats | 3 |
-| [render-cpu](results/render-cpu/README.md) | Is the precise router's median cost the tokenizer's CPU or the hop? | 2 |
+| Dataset | Question | Routers | Runs |
+|---|---|---|---|
+| [chat-rag-mix](results/chat-rag-mix/README.md) | Does the router matter at all? | 4 | [1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40304028854), [2](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40305449205), [3](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40307507746), [4](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40309989360) |
+| [load-weight](results/load-weight/README.md) | Does weighting load higher fix the pile-up? | 5 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40460496902) |
+| [queue-threshold](results/queue-threshold/README.md) | Does a lower queue threshold let load count? | 3 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40464366888) |
+| [scorers](results/scorers/README.md) | Do the router's other load scorers spread the work? | 6 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40650965766) |
+| [active-weights](results/active-weights/README.md) | What does each weight buy prefix-active? | 3 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40837974457) |
+| [head-to-head](results/head-to-head/README.md) | The two best routers in the same run | 4 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/40840160740) |
+| [eight-pods](results/eight-pods/README.md) | Does the pile-up grow with the pool? | 6 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41031613030) |
+| [one-off-heavy](results/one-off-heavy/README.md) | The control: what survives when nothing repeats? | 6 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41032326274) |
+| [precise](results/precise/README.md) | Does the real cache picture beat the estimate? | 6 | [1](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41172235563), [2](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41172674385) |
+| [precise-spec](results/precise-spec/README.md) | Does speculative indexing win back the median? | 3 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41174172419) |
+| [precise-p2](results/precise-p2/README.md) | Does the real picture help the best approximate router? | 2 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41291704692) |
+| [precise-eight-pods](results/precise-eight-pods/README.md) | The real picture on eight pods | 6 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41291707884) |
+| [precise-control](results/precise-control/README.md) | The precise router when nothing repeats | 3 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41327295087) |
+| [render-cpu](results/render-cpu/README.md) | Is the precise router's median cost the tokenizer's CPU or the hop? | 2 | [run](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41329790292) |
 
 Each cell is the median of the eight runs, with the lowest and highest in brackets.
 
