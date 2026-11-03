@@ -4,6 +4,10 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Dependabot for the actions and PyYAML, each update 14 days behind its release like the pins `irb versions` checks,
+  with `tests/test_dependabot.py` holding the cooldown.
+
 ### Fixed
 - `irb versions` reports the newest stable release (the highest plain x.y.z that is not a draft or prerelease), not the
   one GitHub marks latest. vLLM marks release candidates, so the render image was compared with v0.33.0rc3, shown as

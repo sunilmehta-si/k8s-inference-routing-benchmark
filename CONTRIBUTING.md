@@ -72,6 +72,10 @@ together, and the CI chart job checks the chart's default scoring still matches 
 pull request and wait for the `cluster` workflow on it: a result that moved is the release changing behaviour, and
 the pull request should say so.
 
+The release a pin is compared with is the newest stable one: a release candidate is skipped even when upstream marks it
+latest, as vLLM does. Dependabot's pull requests for the actions and PyYAML wait the same 14 days (`cooldown` in
+`.github/dependabot.yml`, held by `tests/test_dependabot.py`); security updates are not delayed.
+
 ## Before you open a pull request
 
 - `python -m unittest discover -s tests -t .` passes.
