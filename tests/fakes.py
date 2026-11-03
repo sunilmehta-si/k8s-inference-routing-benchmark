@@ -62,9 +62,16 @@ class FakeLLM(BaseHTTPRequestHandler):
         pass
 
 
+class RoomyServer(ThreadingHTTPServer):
+    """The standard library listens with a backlog of 5, and a burst of twelve requests already loses some of them to a
+    dropped connection (status 0 in a result). The client sends every request at its arrival time, so a test that
+    replays a burst needs a server that accepts it."""
+    request_queue_size = 128
+    daemon_threads = True
+
+
 def start() -> tuple[ThreadingHTTPServer, str]:
     FakeLLM.seen, FakeLLM.bodies, FakeLLM.status = set(), [], 200
-    server = ThreadingHTTPServer(("127.0.0.1", 0), FakeLLM)
-    server.daemon_threads = True
+    server = RoomyServer(("127.0.0.1", 0), FakeLLM)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, f"http://127.0.0.1:{server.server_port}"

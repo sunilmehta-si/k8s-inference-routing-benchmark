@@ -19,6 +19,10 @@ class ClientTests(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown()
 
+    def test_a_burst_of_forty_requests_is_all_answered(self):
+        results = client.run(self.url, "m", [req(f"b{i}", 0.0, max_tokens=3) for i in range(40)], lead_s=0.2)
+        self.assertEqual({r.status for r in results}, {200})          # with the default backlog of 5, about 30 got status 0
+
     def test_streams_are_timed_and_usage_is_recorded(self):
         results = client.run(self.url, "m", [req("a", 0.0), req("b", 0.2)], lead_s=0.1)
         self.assertEqual([r.id for r in results], ["a", "b"])
