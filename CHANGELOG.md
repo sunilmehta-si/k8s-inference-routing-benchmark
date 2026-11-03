@@ -4,6 +4,11 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- `irb versions` reports the newest stable release (the highest plain x.y.z that is not a draft or prerelease), not the
+  one GitHub marks latest. vLLM marks release candidates, so the render image was compared with v0.33.0rc3, shown as
+  "unknown", and its real lag behind v0.32.0 was hidden.
+
 ## [0.6.0] - 2026-11-02
 
 Three datasets under load, 120 cluster runs: the busier the pods, the more the router matters and the less the
