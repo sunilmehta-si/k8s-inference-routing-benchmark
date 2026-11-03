@@ -8,6 +8,16 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 - Dependabot for the actions and PyYAML, each update 14 days behind its release like the pins `irb versions` checks,
   with `tests/test_dependabot.py` holding the cooldown.
 
+### Changed
+- The render server is vLLM v0.32.0, was v0.21.0 (eleven minor versions behind a release past the 14-day rule). A cluster
+  run on the branch, three runs each of `prefix-active` and `precise-active`
+  ([run 41584187886](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41584187886)), had no
+  errors and landed in the committed eight-run ranges: `precise-active` TTFT p50 76 ms (68-80) against 84 (78-86) and
+  cache hits 79.4% against 79.1%, `prefix-active` p50 71 ms against 71. The datasets under `results/` were measured with
+  the render server at v0.21.0; it only tokenizes for the precise routers, whose scoring the datasets already compare.
+- Tests send bursts to a fake model server that listens with a backlog of 128, not the standard library's 5, which
+  dropped connections from a burst of twelve requests.
+
 ### Fixed
 - `irb versions` reports the newest stable release (the highest plain x.y.z that is not a draft or prerelease), not the
   one GitHub marks latest. vLLM marks release candidates, so the render image was compared with v0.33.0rc3, shown as
