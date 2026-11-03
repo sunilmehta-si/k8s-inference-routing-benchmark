@@ -4,6 +4,7 @@ import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, timedelta
+from pathlib import Path
 from unittest import mock
 
 from inference_routing_bench import versions
@@ -221,7 +222,7 @@ class CliTests(unittest.TestCase):
                     mock.patch.object(versions, "github_release_body", return_value=read_pins()["KIND_NODE_IMAGE"]), \
                     redirect_stdout(out), redirect_stderr(err):
                 self.assertEqual(main(["versions", "--json", path, "-o", f"{d}/versions.md"]), 0)
-            rows = json.loads(open(path).read())
+            rows = json.loads(Path(path).read_text())
         self.assertEqual([r["name"] for r in rows[:-1]], list(COMPONENTS))
         self.assertEqual(rows[-1], {"name": "KIND_NODE_IMAGE", "check": "listed in the pinned kind release's notes", "ok": True})
         rows = rows[:-1]
