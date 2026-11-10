@@ -10,9 +10,16 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ### Changed
 - The router's Envoy is v1.40.2, was v1.33.2 (seven minor versions behind a release past the 14-day rule; the image was
-  built on 2026-10-27). The digest is the manifest list the registry returns for the `distroless-v1.40.2` tag, resolved the
+  built on 2026-10-27). The digest is the OCI index the registry returns for the `distroless-v1.40.2` tag, resolved the
   same way as the one it replaces, which it reproduced exactly. The chart's Envoy bootstrap is unchanged, so a cluster run
-  on the branch checks that it still loads and routes on the new version: CLUSTER_RUN_PLACEHOLDER
+  on the branch, three runs each of `load-aware`, `prefix-active` and `precise-active`
+  ([run 42758591590](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/42758591590)), checks
+  that it still loads and routes: all 1,672 requests of every run returned 200. Against the committed eight-run ranges,
+  TTFT p50 was `load-aware` 106 ms against 109 (99-126) and `prefix-active` 71 ms against 71 (67-74), cache hits 64.0%
+  against 64.4% and 77.2% against 76.7%. `precise-active` p50 was 73 ms against 84 (78-86), below the range as in the
+  render-server run below, with cache hits 79.1% against 79.1%. Goodput was above the committed range in all six
+  `load-aware` and `prefix-active` runs (99.9% and 100% against 99.5% and 99.6%); three runs on one day are too few to
+  credit Envoy with that, and the datasets under `results/` stay as measured on v1.33.2.
 - The render server is vLLM v0.32.0, was v0.21.0 (eleven minor versions behind a release past the 14-day rule). A cluster
   run on the branch, three runs each of `prefix-active` and `precise-active`
   ([run 41584187886](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41584187886)), had no
