@@ -9,6 +9,10 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   with `tests/test_dependabot.py` holding the cooldown.
 
 ### Changed
+- The router's Envoy is v1.40.2, was v1.33.2 (seven minor versions behind a release past the 14-day rule; the image was
+  built on 2026-10-27). The digest is the manifest list the registry returns for the `distroless-v1.40.2` tag, resolved the
+  same way as the one it replaces, which it reproduced exactly. The chart's Envoy bootstrap is unchanged, so a cluster run
+  on the branch checks that it still loads and routes on the new version: CLUSTER_RUN_PLACEHOLDER
 - The render server is vLLM v0.32.0, was v0.21.0 (eleven minor versions behind a release past the 14-day rule). A cluster
   run on the branch, three runs each of `prefix-active` and `precise-active`
   ([run 41584187886](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/41584187886)), had no
