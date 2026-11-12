@@ -67,7 +67,8 @@ when it held in every run; say "seven of eight" when it did not.
 
 Everything the cluster runs is pinned in `deploy/versions.env`; `irb versions` (or `make versions`) says which pins
 have a newer release upstream and from which date it counts as adoptable (14 days after publication, so a withdrawn
-release is never measured). The router moves as one: `ROUTER_VERSION`, `ROUTER_COMMIT` and `EPP_IMAGE` change
+release is never measured). When the newest release is too new, it names the highest earlier one that is already old
+enough, and `--strict` fails on it. The router moves as one: `ROUTER_VERSION`, `ROUTER_COMMIT` and `EPP_IMAGE` change
 together, and the CI chart job checks the chart's default scoring still matches `router-default.yaml`. Bump in its own
 pull request and wait for the `cluster` workflow on it: a result that moved is the release changing behaviour, and
 the pull request should say so.

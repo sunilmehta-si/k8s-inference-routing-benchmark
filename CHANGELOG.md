@@ -7,6 +7,9 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 ### Added
 - Dependabot for the actions and PyYAML, each update 14 days behind its release like the pins `irb versions` checks,
   with `tests/test_dependabot.py` holding the cooldown.
+- `irb versions` names an earlier release that is already 14 days old when the newest is not, and `--strict` fails
+  on it. Before, such a pin read as "too new" until the newest release aged (the simulator's v1.1.0 would have
+  waited behind v1.2.0 until 24 Nov). `--json` adds `adoptable_now`, `ready` and `ready_published`.
 
 ### Changed
 - The router's Envoy is v1.40.2, was v1.33.2 (seven minor versions behind a release past the 14-day rule; the image was

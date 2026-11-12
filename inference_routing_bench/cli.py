@@ -125,7 +125,7 @@ def _cmd_versions(args: argparse.Namespace) -> int:
     today = date.today()
     try:
         pins = read_pins()
-        rows = report(pins)
+        rows = report(pins, today=today)
         node_ok = node_image_listed(pins)
     except (OSError, VersionsError) as exc:
         print(f"irb: {exc}", file=sys.stderr)
@@ -136,9 +136,10 @@ def _cmd_versions(args: argparse.Namespace) -> int:
     _write(text, args.output)
     waiting = [r for r in rows if r.too_new(today)]
     if waiting:
-        print("irb: too new to adopt yet: " + ", ".join(f"{r.name} {r.latest.tag} from {r.adoptable_on}" for r in waiting),
-              file=sys.stderr)
-    ready = [r for r in rows if r.status != "current" and not r.too_new(today)]
+        print("irb: too new to adopt yet: " + ", ".join(
+            f"{r.name} {r.latest.tag} from {r.adoptable_on}" + (f" ({r.ready.tag} is adoptable now)" if r.ready else "")
+            for r in waiting), file=sys.stderr)
+    ready = [r for r in rows if r.adoptable_now(today)]
     if not node_ok:
         print("irb: KIND_NODE_IMAGE is not an image the pinned kind release lists", file=sys.stderr)
     return 1 if (args.strict and ready) or not node_ok else 0

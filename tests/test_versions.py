@@ -10,7 +10,7 @@ from unittest import mock
 from inference_routing_bench import versions
 from inference_routing_bench.cli import main
 from inference_routing_bench.versions import (COMPONENTS, NOT_COMPARED, Release, Row, VersionsError, compare, markdown,
-                                              pinned_version, read_pins, report)
+                                              newest_ready, pinned_version, read_pins, report)
 
 TODAY = date(2026, 10, 31)
 
@@ -160,6 +160,48 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(fake.call_count, len(COMPONENTS))
 
 
+class EarlierReleaseTests(unittest.TestCase):
+    # The simulator on 17 Nov 2026: v1.2.0 (10 Nov) is too new, v1.1.0 (3 Nov) has just turned 14 days old
+    SIM = [Release("v1.2.0", date(2026, 11, 10)), Release("v1.1.0", date(2026, 11, 3)), Release("v1.0.0", date(2026, 10, 1))]
+    DAY = date(2026, 11, 17)
+
+    def test_the_newest_release_past_the_pin_that_is_old_enough(self):
+        self.assertEqual(newest_ready("v1.0.0", self.SIM, self.DAY), Release("v1.1.0", date(2026, 11, 3)))
+        self.assertIsNone(newest_ready("v1.0.0", self.SIM, self.DAY - timedelta(days=1)))
+        self.assertIsNone(newest_ready("v1.1.0", self.SIM, self.DAY))
+        self.assertIsNone(newest_ready("main", self.SIM, self.DAY))
+        self.assertIsNone(newest_ready("v1.0.0", [Release("v1.1.0")], self.DAY))
+
+    def test_report_looks_for_one_only_when_the_latest_is_too_new(self):
+        seen = []
+        def every(repo):
+            seen.append(repo)
+            return self.SIM
+        pins = {**read_pins(), **{k: "v1.0.0" for k in COMPONENTS}}
+        rows = report(pins, fetch=lambda repo: self.SIM[0], fetch_all=every, today=self.DAY)
+        self.assertEqual(len(seen), len(COMPONENTS))
+        self.assertEqual({r.ready.tag for r in rows}, {"v1.1.0"})
+        seen.clear()
+        rows = report(pins, fetch=lambda repo: self.SIM[0], fetch_all=every, today=date(2026, 11, 30))
+        self.assertEqual(seen, [])
+        self.assertEqual({r.ready for r in rows}, {None})
+
+    def test_the_stable_releases_come_highest_version_first(self):
+        listing = [{"tag_name": "v1.1.0", "published_at": "2026-11-03T08:00:00Z"},
+                   {"tag_name": "v1.2.0", "published_at": "2026-11-10T08:00:00Z"},
+                   {"tag_name": "v1.3.0-rc.1", "published_at": "2026-11-11T08:00:00Z"},
+                   {"tag_name": "v1.0.0", "published_at": "2026-10-01T08:00:00Z"}]
+        urlopen, _ = serving({"/releases?per_page=50": listing})
+        with mock.patch.object(versions.urllib.request, "urlopen", urlopen):
+            self.assertEqual([r.tag for r in versions.github_stable("o/r")], ["v1.2.0", "v1.1.0", "v1.0.0"])
+
+    def test_markdown_names_it_and_does_not_count_the_pin_as_waiting(self):
+        row = Row("SIM_IMAGE", "llm-d/llm-d-inference-sim", "v1.0.0", self.SIM[0], self.SIM[1])
+        text = markdown([row], self.DAY)
+        self.assertIn("published 2026-11-10, adoptable from 2026-11-24; **v1.1.0** (published 2026-11-03) is adoptable now |", text)
+        self.assertIn("1 of 1 behind upstream\n", text)
+
+
 class MarkdownTests(unittest.TestCase):
     def row(self, pinned, tag, published):
         return Row("ROUTER_VERSION", "llm-d/llm-d-router", pinned, Release(tag, published))
@@ -212,6 +254,7 @@ class NodeImageTests(unittest.TestCase):
     def test_cli_fails_when_the_node_image_is_not_listed(self):
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.object(versions, "github_latest", return_value=Release("v0.33.0", date(2026, 1, 1))), \
+                mock.patch.object(versions, "github_stable", return_value=[]), \
                 mock.patch.object(versions, "github_release_body", return_value="nothing here"), \
                 redirect_stdout(out), redirect_stderr(err):
             self.assertEqual(main(["versions"]), 1)
@@ -219,9 +262,10 @@ class NodeImageTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
-    def run_cli(self, *argv, published):
+    def run_cli(self, *argv, published, stable=None):
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.object(versions, "github_latest", return_value=Release("v9.9.9", published)), \
+                mock.patch.object(versions, "github_stable", return_value=stable or []), \
                 mock.patch.object(versions, "github_release_body", return_value=read_pins()["KIND_NODE_IMAGE"]), \
                 redirect_stdout(out), redirect_stderr(err):
             code = main(["versions", *argv])
@@ -234,6 +278,14 @@ class CliTests(unittest.TestCase):
         code, _, err = self.run_cli("--strict", published=date.today() - timedelta(days=3))
         self.assertEqual(code, 0)
         self.assertIn("too new to adopt yet: KIND_VERSION v9.9.9", err)
+
+    def test_strict_fails_when_an_earlier_release_is_old_enough_though_the_latest_is_not(self):
+        old = date.today() - timedelta(days=20)
+        stable = [Release("v9.9.9", date.today() - timedelta(days=3)), Release("v9.9.8", old)]
+        code, out, err = self.run_cli("--strict", published=date.today() - timedelta(days=3), stable=stable)
+        self.assertEqual(code, 1)
+        self.assertIn(f"**v9.9.8** (published {old}) is adoptable now", out)
+        self.assertIn("(v9.9.8 is adoptable now)", err)
 
     def test_without_strict_it_only_reports(self):
         self.assertEqual(self.run_cli(published=date.today() - timedelta(days=30))[0], 0)
@@ -251,6 +303,7 @@ class CliTests(unittest.TestCase):
             path = f"{d}/versions.json"
             out, err = io.StringIO(), io.StringIO()
             with mock.patch.object(versions, "github_latest", return_value=Release("v9.9.9", date(2026, 10, 27))), \
+                    mock.patch.object(versions, "github_stable", return_value=[]), \
                     mock.patch.object(versions, "github_release_body", return_value=read_pins()["KIND_NODE_IMAGE"]), \
                     redirect_stdout(out), redirect_stderr(err):
                 self.assertEqual(main(["versions", "--json", path, "-o", f"{d}/versions.md"]), 0)
@@ -261,6 +314,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(rows[0]["latest"], "v9.9.9")
         self.assertEqual(rows[0]["adoptable_on"], "2026-11-10")
         self.assertEqual({r["status"] for r in rows}, {"major behind"})
+        self.assertEqual({(r["ready"], r["ready_published"]) for r in rows}, {(None, None)})
 
 
 if __name__ == "__main__":
