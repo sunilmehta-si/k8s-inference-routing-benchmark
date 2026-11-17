@@ -12,6 +12,19 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   waited behind v1.2.0 until 24 Nov). `--json` adds `adoptable_now`, `ready` and `ready_published`.
 
 ### Changed
+- The simulator is llm-d-inference-sim v1.1.0, was v1.0.0 (published 3 November, adopted the day it turned 14 days old).
+  The digest is the OCI index the registry returns for the `v1.1.0` tag, resolved the same way as the one it replaces,
+  which it reproduced exactly. v1.1.0 samples latencies in nanoseconds where v1.0.0 cut each sample to whole
+  milliseconds ([llm-d-inference-sim#836](https://github.com/llm-d/llm-d-inference-sim/pull/836)), so a simulated pod
+  decodes a little slower. Three runs each of `round-robin`, `load-aware`, `prefix-active` and `precise-active` on the
+  branch ([run 44056549843](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/44056549843))
+  against the same on v1.0.0 the same morning
+  ([run 44062257174](https://github.com/sunilmehta-si/k8s-inference-routing-benchmark/actions/runs/44062257174)): TPOT
+  p50 was 1.0 to 1.6 ms higher in every router, and no run of one version overlapped one of the other (`precise-active`
+  16.8 against 15.2 ms), and end-to-end p50 27 to 59 ms higher at the median. TTFT, cache hits and goodput overlapped,
+  and every request returned 200. `precise-active`'s TTFT p50 was 73 ms on both versions, below its committed 78-86 ms
+  as in the two runs below, so that shift is not the simulator's. The datasets under `results/` stay as measured on
+  v1.0.0; compare TPOT and end-to-end latency only between runs on the same simulator.
 - The router's Envoy is v1.40.2, was v1.33.2 (seven minor versions behind a release past the 14-day rule; the image was
   built on 2026-10-27). The digest is the OCI index the registry returns for the `distroless-v1.40.2` tag, resolved the
   same way as the one it replaces, which it reproduced exactly. The chart's Envoy bootstrap is unchanged, so a cluster run
