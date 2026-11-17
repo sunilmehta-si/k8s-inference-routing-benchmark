@@ -131,7 +131,7 @@ class ReportTests(unittest.TestCase):
     def test_every_component_has_a_pin_in_versions_env(self):
         pins = read_pins()
         self.assertEqual(set(COMPONENTS) - set(pins), set())
-        self.assertEqual(pinned_version(pins["SIM_IMAGE"]), "v1.0.0")
+        self.assertEqual(pinned_version(pins["SIM_IMAGE"]), "v1.1.0")
         self.assertEqual(pins["ROUTER_VERSION"], "v1.0.0")
 
     def test_every_pin_is_compared_or_says_why_not(self):
