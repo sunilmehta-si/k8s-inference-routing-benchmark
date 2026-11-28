@@ -4,6 +4,12 @@ All notable changes to this project. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Security
+- The render server is vLLM v0.34.0 (was v0.32.0), taken before its 14 days (published 16 Nov) for its security fixes,
+  among them a ReDoS in the sanitizer of validation errors (vllm#52120), which an HTTP request reaches. The render
+  server only tokenizes for the precise routers; a cluster run checks that `vllm launch render` still starts with the
+  same arguments and that those routers still score.
+
 ### Added
 - Dependabot for the actions and PyYAML, each update 14 days behind its release like the pins `irb versions` checks,
   with `tests/test_dependabot.py` holding the cooldown.
@@ -12,6 +18,8 @@ All notable changes to this project. The format follows [Keep a Changelog](https
   waited behind v1.2.0 until 24 Nov). `--json` adds `adoptable_now`, `ready` and `ready_published`.
 
 ### Changed
+- The simulator is llm-d-inference-sim v1.2.0 (was v1.1.0; published 10 Nov, adoptable from 24 Nov). It picks KV-cache
+  blocks to evict without scanning every unused one; a cluster run checks the results against the committed ones.
 - The simulator is llm-d-inference-sim v1.1.0, was v1.0.0 (published 3 November, adopted the day it turned 14 days old).
   The digest is the OCI index the registry returns for the `v1.1.0` tag, resolved the same way as the one it replaces,
   which it reproduced exactly. v1.1.0 samples latencies in nanoseconds where v1.0.0 cut each sample to whole
